@@ -28,8 +28,6 @@ const db = await mysql.createPool({
     connectionLimit: 10
 })
 
-<<<<<<< Updated upstream
-=======
 /* ---------- REGISTER ---------- */
 
 app.post("/register", async (req,res)=>{
@@ -64,7 +62,47 @@ app.post("/register", async (req,res)=>{
         res.status(500).json({status:"error"})
     }
 })
->>>>>>> Stashed changes
+
+/* ---------- LOGIN ---------- */
+
+app.post("/login", async (req,res)=>{
+    try{
+        const {email,password} = req.body
+
+        const [rows] = await db.execute(
+            "SELECT * FROM users WHERE email=?",
+            [email]
+        )
+
+        if(rows.length===0){
+            return res.json({status:"error",message:"wrong email"})
+        }
+
+        const user = rows[0]
+        const match = await bcrypt.compare(password,user.password)
+
+        if(!match){
+            return res.json({status:"error",message:"wrong password"})
+        }
+
+        res.json({
+            status:"ok",
+            user:{
+                id:user.id,
+                name:user.name,
+                email:user.email
+            }
+        })
+    }
+    catch(err){
+        console.log(err)
+        res.status(500).json({status:"error"})
+    }
+})
+
+app.get(/(.*)/, (req, res) => {
+    res.sendFile(path.join(__dirname, "../frontend/index.html"));
+});
 
 app.listen(3000, ()=>{
     console.log("http://localhost:3000")
