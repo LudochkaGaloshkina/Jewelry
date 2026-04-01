@@ -557,12 +557,17 @@ async function deleteFavoriteHandler(req, res) {
     }
 }
 
+
+//эндпоинты регистрации
 app.post("/register", registerHandler)
 app.post("/api/auth/register", registerHandler)
 
+//эндпоинты логина
 app.post("/login", loginHandler)
 app.post("/api/auth/login", loginHandler)
 
+
+//эндпоинт получения данных текущего пользователя
 app.get("/api/auth/me", authMiddleware, (req, res) => {
     res.json({
         status: "ok",
@@ -575,12 +580,14 @@ app.post("/api/auth/logout", (req, res) => {
     res.json({ status: "ok" })
 })
 
+//CRUD эндпоинт для работы с товарами
 app.get("/api/items", listItemsHandler)
 app.get("/api/items/:id", getItemByIdHandler)
 app.post("/api/items", authMiddleware, requireAdmin, createItemHandler)
 app.put("/api/items/:id", authMiddleware, requireAdmin, updateItemHandler)
 app.delete("/api/items/:id", authMiddleware, requireAdmin, deleteItemHandler)
 
+//CRUD эндпоинты для работы с избранным
 app.get("/api/users/me/favorites", authMiddleware, listFavoritesHandler)
 app.post("/api/users/me/favorites/:itemId", authMiddleware, addFavoriteHandler)
 app.delete("/api/users/me/favorites/:itemId", authMiddleware, deleteFavoriteHandler)

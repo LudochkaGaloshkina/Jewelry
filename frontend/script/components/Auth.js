@@ -1,17 +1,15 @@
+import AppHeader from './AppHeader.js';
+
 export default {
     props: ['mode'],
 
+    components: {
+        AppHeader
+    },
+
     template: `
     <div class="auth-page">
-        <header class="auth-header">
-            <router-link class="brand" to="/">
-                <img class="brand-logo" src="/logo.png" alt="Diamond Blackstar logo">
-                <div class="brand-copy">
-                    <span class="brand-name">Diamond Blackstar</span>
-                    <span class="brand-tagline">Jewelry crafted with character</span>
-                </div>
-            </router-link>
-        </header>
+        <app-header mode="auth"></app-header>
 
         <section class="auth-shell">
             <div class="auth-copy">
@@ -163,7 +161,7 @@ export default {
                 sessionStorage.setItem('authToken', result.token);
                 sessionStorage.setItem('currentUser', JSON.stringify(result.user));
                 window.dispatchEvent(new Event('auth-changed'));
-                this.$router.push('/');
+                this.$router.push('/profile');
             } catch (err) {
                 this.message = 'Ошибка соединения с сервером.';
             } finally {

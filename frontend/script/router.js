@@ -1,5 +1,6 @@
 import Home from './components/Home.js';
 import Auth from './components/Auth.js';
+import Profile from './components/Profile.js';
 
 
 const { createRouter, createWebHistory } = window.VueRouter;
@@ -18,11 +19,24 @@ const routes = [
     { path: '/', component: Home },
     { path: '/auth/login', component: Auth, props: { mode: 'login' } },
     { path: '/auth/register', component: Auth, props: { mode: 'register' } },
+    { path: '/profile', component: Profile, meta: { requiresAuth: true } },
 ];
 
 export const router = createRouter({
     history: createWebHistory(),
     routes
+});
+
+router.beforeEach((to) => {
+    const token = sessionStorage.getItem('authToken');
+
+    if (to.meta.requiresAuth && !token) {
+        return '/auth/login';
+    }
+
+    if ((to.path === '/auth/login' || to.path === '/auth/register') && token) {
+        return '/profile';
+    }
 });
 
 updatePageStyle(window.location.pathname);

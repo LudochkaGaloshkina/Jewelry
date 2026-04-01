@@ -31,42 +31,107 @@ a {
     text-decoration: none;
 }
 
-.auth-page {
-    min-height: 100vh;
-    padding: 28px clamp(18px, 4vw, 52px) 40px;
-    background: linear-gradient(180deg, rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0.42));
+.site-header {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 18px;
+    padding: 16px 22px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 34px;
+    background: rgba(0, 0, 0, 0.24);
+    backdrop-filter: blur(14px);
+    box-shadow: 0 12px 34px rgba(0, 0, 0, 0.22);
 }
 
-.auth-header {
-    margin-bottom: 28px;
+.header-tools {
+    display: flex;
+    align-items: center;
+    gap: 14px;
 }
 
-.brand {
+.header-tools-right {
+    justify-content: flex-end;
+}
+
+.tool-button,
+.account-link {
     display: inline-flex;
     align-items: center;
-    gap: 16px;
-    padding: 14px 22px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    gap: 10px;
+    min-height: 48px;
+    padding: 0 16px;
     border-radius: 999px;
-    background: rgba(0, 0, 0, 0.28);
-    backdrop-filter: blur(12px);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-main);
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
 }
 
-.brand-logo {
+.tool-button:hover,
+.account-link:hover {
+    transform: translateY(-1px);
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(239, 207, 147, 0.38);
+}
+
+.account-link {
+    background: linear-gradient(135deg, rgba(239, 207, 147, 0.18), rgba(170, 119, 46, 0.16));
+}
+
+.account-panel {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.account-name {
+    cursor: pointer;
+}
+
+.logout-button {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.tool-icon-image,
+.tool-icon-svg {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+}
+
+.tool-icon-svg {
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.8;
+}
+
+.home-brand {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+}
+
+.home-logo {
     width: 72px;
     height: 72px;
     object-fit: contain;
     filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.28));
 }
 
-.brand-copy {
+.home-brand-copy {
     display: flex;
     flex-direction: column;
     gap: 3px;
 }
 
-.brand-name {
+.home-brand-name {
     color: var(--gold-strong);
     font-family: "Cormorant Garamond", serif;
     font-size: clamp(2rem, 4vw, 2.8rem);
@@ -75,11 +140,21 @@ a {
     letter-spacing: 0.04em;
 }
 
-.brand-tagline {
+.home-brand-tagline {
     color: var(--text-muted);
     font-size: 0.85rem;
     letter-spacing: 0.14em;
     text-transform: uppercase;
+}
+
+.auth-page {
+    min-height: 100vh;
+    padding: 28px clamp(18px, 4vw, 52px) 40px;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0.42));
+}
+
+.auth-header {
+    margin-bottom: 28px;
 }
 
 .auth-shell {
@@ -284,6 +359,17 @@ a {
 }
 
 @media (max-width: 900px) {
+    .site-header {
+        grid-template-columns: 1fr;
+        justify-items: center;
+    }
+
+    .header-tools,
+    .header-tools-right {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
     .auth-shell {
         grid-template-columns: 1fr;
         min-height: auto;
@@ -299,20 +385,34 @@ a {
         padding: 18px 14px 28px;
     }
 
-    .brand {
-        width: 100%;
-        box-sizing: border-box;
-        justify-content: center;
-        border-radius: 28px;
-    }
-
-    .brand-logo {
+    .home-logo {
         width: 58px;
         height: 58px;
     }
 
-    .brand-name {
+    .home-brand-name {
         font-size: 2rem;
+    }
+
+    .tool-button,
+    .account-link {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .header-tools,
+    .header-tools-right {
+        width: 100%;
+    }
+
+    .account-panel {
+        width: 100%;
+        flex-direction: column;
+    }
+
+    .home-brand {
+        flex-direction: column;
+        text-align: center;
     }
 
     .auth-title {
