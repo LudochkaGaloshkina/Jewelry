@@ -101,23 +101,56 @@ export default {
     },
 
     methods: {
-        loadCurrentUser() {
-            const rawUser = sessionStorage.getItem('currentUser');
+        clearAuthCookie() {
+            document.cookie = 'authToken=; Path=/; Max-Age=0; SameSite=Lax';
+        },
 
-            if (!rawUser) {
+        async loadCurrentUser() {
+            const token = sessionStorage.getItem('authToken');
+
+            if (!token) {
+                this.clearAuthCookie();
                 this.currentUserName = '';
+                sessionStorage.removeItem('currentUser');
                 return;
             }
 
             try {
-                const user = JSON.parse(rawUser);
-                this.currentUserName = user.name || '';
+                const response = await fetch('/api/auth/me', {
+                    credentials: 'include',
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                });
+
+                const result = await response.json();
+
+                if (!response.ok || result.status !== 'ok') {
+                    throw new Error('Unauthorized');
+                }
+
+                sessionStorage.setItem('currentUser', JSON.stringify(result.user));
+                this.currentUserName = result.user.name || '';
             } catch (err) {
+                this.clearAuthCookie();
+                sessionStorage.removeItem('authToken');
+                sessionStorage.removeItem('currentUser');
                 this.currentUserName = '';
             }
         },
 
-        logout() {
+        async logout() {
+            try {
+                await fetch('/api/auth/logout', {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+            } catch (err) {
+                // logout should still clear local session even if the request fails
+            }
+
+            this.clearAuthCookie();
+            sessionStorage.removeItem('authToken');
             sessionStorage.removeItem('currentUser');
             this.currentUserName = '';
             window.dispatchEvent(new Event('auth-changed'));

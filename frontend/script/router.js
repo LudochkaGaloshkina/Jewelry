@@ -1,4 +1,5 @@
 import Home from './components/Home.js';
+import Auth from './components/Auth.js';
 
 
 const { createRouter, createWebHistory } = window.VueRouter;
@@ -15,6 +16,8 @@ function updatePageStyle(path) {
 
 const routes = [
     { path: '/', component: Home },
+    { path: '/auth/login', component: Auth, props: { mode: 'login' } },
+    { path: '/auth/register', component: Auth, props: { mode: 'register' } },
 ];
 
 export const router = createRouter({

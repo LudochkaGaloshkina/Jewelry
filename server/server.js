@@ -1,7 +1,7 @@
 import express from "express"
 import mysql from "mysql2/promise"
-import cors from "cors"
 import bcrypt from "bcrypt"
+import cors from "cors"
 import path from "path"
 import crypto from "crypto"
 import { fileURLToPath } from "url"
@@ -43,6 +43,38 @@ function createAuthToken(userId) {
     return `${payload}.${signature}`
 }
 
+function setAuthCookie(res, token) {
+    res.cookie("authToken", token, {
+        maxAge: TOKEN_TTL_SECONDS * 1000,
+        sameSite: "lax",
+        path: "/"
+    })
+}
+
+function clearAuthCookie(res) {
+    res.clearCookie("authToken", {
+        sameSite: "lax",
+        path: "/"
+    })
+}
+
+function getCookieValue(req, name) {
+    const cookieHeader = req.headers.cookie
+    if (!cookieHeader) return null
+
+    const cookies = cookieHeader.split(";")
+
+    for (const cookie of cookies) {
+        const [rawName, ...rawValueParts] = cookie.trim().split("=")
+
+        if (rawName !== name) continue
+
+        return decodeURIComponent(rawValueParts.join("="))
+    }
+
+    return null
+}
+
 function verifyAuthToken(token) {
     if (!token) return null
 
@@ -78,9 +110,13 @@ function getBearerToken(req) {
     return token
 }
 
+function getAuthToken(req) {
+    return getBearerToken(req) || getCookieValue(req, "authToken") || req.query.token || null
+}
+
 async function authMiddleware(req, res, next) {
     try {
-        const token = getBearerToken(req)
+        const token = getAuthToken(req)
         const tokenData = verifyAuthToken(token)
 
         if (!tokenData) {
@@ -105,11 +141,11 @@ async function authMiddleware(req, res, next) {
 }
 
 async function registerHandler(req, res) {
-    try {
-        const { name, email, password } = req.body
+    try{
+        const {name,email,password} = req.body
 
-        if (!name || !email || !password) {
-            return res.json({ status: "error", message: "missing fields" })
+        if(!name || !email || !password){
+            return res.json({status:"error",message:"missing fields"})
         }
 
         const [existing] = await db.execute(
@@ -117,16 +153,16 @@ async function registerHandler(req, res) {
             [email]
         )
 
-        if (existing.length > 0) {
-            return res.json({ status: "error", message: "email exists" })
+        if(existing.length>0){
+            return res.json({status:"error",message:"email exists"})
         }
 
-        const hash = await bcrypt.hash(password, 10)
+        const hash = await bcrypt.hash(password,10)
 
         const [result] = await db.execute(
             `INSERT INTO users (name,email,password,role,createdAt)
              VALUES (?,?,?,'user',NOW())`,
-            [name, email, hash]
+            [name,email,hash]
         )
 
         const userId = result.insertId
@@ -137,67 +173,67 @@ async function registerHandler(req, res) {
             [userId]
         )
 
+        setAuthCookie(res, token)
         res.json({
-            status: "ok",
+            status:"ok",
             token,
             user: users[0]
         })
-    } catch (err) {
+    }
+    catch(err){
         console.log(err)
-        res.status(500).json({ status: "error" })
+        res.status(500).json({status:"error"})
     }
 }
 
+/* ---------- LOGIN ---------- */
+
 async function loginHandler(req, res) {
-    try {
-        const { email, password } = req.body
+    try{
+        const {email,password} = req.body
 
         const [rows] = await db.execute(
             "SELECT * FROM users WHERE email=?",
             [email]
         )
 
-        if (rows.length === 0) {
-            return res.json({ status: "error", message: "wrong email" })
+        if(rows.length===0){
+            return res.json({status:"error",message:"wrong email"})
         }
 
         const user = rows[0]
-        const match = await bcrypt.compare(password, user.password)
+        const match = await bcrypt.compare(password,user.password)
 
-        if (!match) {
-            return res.json({ status: "error", message: "wrong password" })
+        if(!match){
+            return res.json({status:"error",message:"wrong password"})
         }
 
         const token = createAuthToken(user.id)
 
+        setAuthCookie(res, token)
         res.json({
-            status: "ok",
+            status:"ok",
             token,
-            user: {
-                id: user.id,
-                name: user.name,
-                email: user.email,
-                role: user.role,
-                createdAt: user.createdAt
+            user:{
+                id:user.id,
+                name:user.name,
+                email:user.email,
+                role:user.role,
+                createdAt:user.createdAt
             }
         })
-    } catch (err) {
+    }
+    catch(err){
         console.log(err)
-        res.status(500).json({ status: "error" })
+        res.status(500).json({status:"error"})
     }
 }
-
-/* ---------- REGISTER ---------- */
 
 app.post("/register", registerHandler)
 app.post("/api/auth/register", registerHandler)
 
-/* ---------- LOGIN ---------- */
-
 app.post("/login", loginHandler)
 app.post("/api/auth/login", loginHandler)
-
-/* ---------- CURRENT USER ---------- */
 
 app.get("/api/auth/me", authMiddleware, (req, res) => {
     res.json({
@@ -206,10 +242,15 @@ app.get("/api/auth/me", authMiddleware, (req, res) => {
     })
 })
 
-app.get(/(.*)/, (req, res) => {
-    res.sendFile(path.join(__dirname, "../frontend/index.html"))
+app.post("/api/auth/logout", (req, res) => {
+    clearAuthCookie(res)
+    res.json({ status: "ok" })
 })
 
-app.listen(3000, () => {
+app.use((req, res) => {
+    res.sendFile(path.join(__dirname, "../frontend/index.html"))
+});
+
+app.listen(3000, ()=>{
     console.log("http://localhost:3000")
 })
