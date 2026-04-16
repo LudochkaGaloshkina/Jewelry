@@ -30,6 +30,53 @@ const db = await mysql.createPool({
     connectionLimit: 10
 })
 
+function getSafeUser(user) {
+    return {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        createdAt: user.createdAt,
+        hasSecretWord: Boolean(user.secretWordHash)
+    }
+}
+
+function normalizeSecretWord(value) {
+    return String(value || "").trim().toLowerCase()
+}
+
+function getPasswordValidationError(value) {
+    if (typeof value !== "string") {
+        return "Пароль должен быть строкой."
+    }
+
+    if (value.length < 8) {
+        return "Пароль должен быть не короче 8 символов."
+    }
+
+    if (!/[a-z]/.test(value)) {
+        return "Пароль должен содержать хотя бы одну строчную латинскую букву."
+    }
+
+    if (!/[A-Z]/.test(value)) {
+        return "Пароль должен содержать хотя бы одну заглавную латинскую букву."
+    }
+
+    if (!/\d/.test(value)) {
+        return "Пароль должен содержать хотя бы одну цифру."
+    }
+
+    return null
+}
+
+function validatePassword(value) {
+    return getPasswordValidationError(value) === null
+}
+
+function validateSecretWord(value) {
+    return typeof value === "string" && normalizeSecretWord(value).length >= 3
+}
+
 
 function createAuthToken(userId) {
     const expiresAt = Math.floor(Date.now() / 1000) + TOKEN_TTL_SECONDS
@@ -123,7 +170,7 @@ async function authMiddleware(req, res, next) {
         }
 
         const [rows] = await db.execute(
-            "SELECT id, name, email, role, createdAt FROM users WHERE id=? LIMIT 1",
+            "SELECT id, name, email, role, createdAt, secretWordHash FROM users WHERE id=? LIMIT 1",
             [tokenData.userId]
         )
 
@@ -131,7 +178,7 @@ async function authMiddleware(req, res, next) {
             return res.status(401).json({ status: "error", message: "unauthorized" })
         }
 
-        req.user = rows[0]
+        req.user = getSafeUser(rows[0])
         next()
     } catch (err) {
         console.log(err)
@@ -141,10 +188,28 @@ async function authMiddleware(req, res, next) {
 
 async function registerHandler(req, res) {
     try{
-        const {name,email,password} = req.body
+        const {name,email,password,confirmPassword,secretWord} = req.body
 
         if(!name || !email || !password){
             return res.json({status:"error",message:"missing fields"})
+        }
+
+        if (!confirmPassword) {
+            return res.json({ status: "error", message: "Подтвердите пароль." })
+        }
+
+        if (password !== confirmPassword) {
+            return res.json({ status: "error", message: "Пароли не совпадают." })
+        }
+
+        const passwordValidationError = getPasswordValidationError(password)
+
+        if (passwordValidationError) {
+            return res.json({ status: "error", message: passwordValidationError })
+        }
+
+        if (secretWord && !validateSecretWord(secretWord)) {
+            return res.json({ status: "error", message: "Секретное слово должно содержать минимум 3 символа." })
         }
 
         const [existing] = await db.execute(
@@ -157,18 +222,21 @@ async function registerHandler(req, res) {
         }
 
         const hash = await bcrypt.hash(password,10)
+        const secretWordHash = secretWord
+            ? await bcrypt.hash(normalizeSecretWord(secretWord), 10)
+            : null
 
         const [result] = await db.execute(
-            `INSERT INTO users (name,email,password,role,createdAt)
-             VALUES (?,?,?,'user',NOW())`,
-            [name,email,hash]
+            `INSERT INTO users (name,email,password,secretWordHash,role,createdAt)
+             VALUES (?,?,?,?, 'user',NOW())`,
+            [name,email,hash,secretWordHash]
         )
 
         const userId = result.insertId
         const token = createAuthToken(userId)
 
         const [users] = await db.execute(
-            "SELECT id, name, email, role, createdAt FROM users WHERE id=? LIMIT 1",
+            "SELECT id, name, email, role, createdAt, secretWordHash FROM users WHERE id=? LIMIT 1",
             [userId]
         )
 
@@ -176,7 +244,7 @@ async function registerHandler(req, res) {
         res.json({
             status:"ok",
             token,
-            user: users[0]
+            user: getSafeUser(users[0])
         })
     }
     catch(err){
@@ -213,18 +281,107 @@ async function loginHandler(req, res) {
         res.json({
             status:"ok",
             token,
-            user:{
-                id:user.id,
-                name:user.name,
-                email:user.email,
-                role:user.role,
-                createdAt:user.createdAt
-            }
+            user: getSafeUser(user)
         })
     }
     catch(err){
         console.log(err)
         res.status(500).json({status:"error"})
+    }
+}
+
+async function updateSecretWordHandler(req, res) {
+    try {
+        const { secretWord } = req.body
+
+        if (!validateSecretWord(secretWord)) {
+            return res.status(400).json({
+                status: "error",
+                message: "Секретное слово должно содержать минимум 3 символа."
+            })
+        }
+
+        const secretWordHash = await bcrypt.hash(normalizeSecretWord(secretWord), 10)
+
+        await db.execute(
+            "UPDATE users SET secretWordHash=? WHERE id=?",
+            [secretWordHash, req.user.id]
+        )
+
+        const [rows] = await db.execute(
+            "SELECT id, name, email, role, createdAt, secretWordHash FROM users WHERE id=? LIMIT 1",
+            [req.user.id]
+        )
+
+        return res.json({
+            status: "ok",
+            message: "Секретное слово сохранено.",
+            user: getSafeUser(rows[0])
+        })
+    } catch (err) {
+        console.log(err)
+        return res.status(500).json({ status: "error" })
+    }
+}
+
+//Восстановление пароля по секретному слову
+
+async function resetPasswordHandler(req, res) {
+    try {
+        const { email, secretWord, newPassword } = req.body
+
+        if (!email || !secretWord || !newPassword) {
+            return res.status(400).json({ status: "error", message: "missing fields" })
+        }
+
+        if (!validatePassword(newPassword)) {
+            return res.status(400).json({
+                status: "error",
+                message: getPasswordValidationError(newPassword)
+            })
+        }
+
+        const [rows] = await db.execute(
+            "SELECT id, secretWordHash FROM users WHERE email=? LIMIT 1",
+            [email]
+        )
+
+        if (rows.length === 0) {
+            return res.json({ status: "error", message: "Пользователь с таким email не найден." })
+        }
+
+        const user = rows[0]
+
+        if (!user.secretWordHash) {
+            return res.json({
+                status: "error",
+                message: "Для этого аккаунта не задано секретное слово. Обратитесь в личный кабинет после входа."
+            })
+        }
+
+        const isSecretWordMatch = await bcrypt.compare(
+            normalizeSecretWord(secretWord),
+            user.secretWordHash
+        )
+
+        if (!isSecretWordMatch) {
+            return res.json({ status: "error", message: "Секретное слово не совпадает." })
+        }
+
+        const passwordHash = await bcrypt.hash(newPassword, 10)
+
+        await db.execute(
+            "UPDATE users SET password=? WHERE id=?",
+            [passwordHash, user.id]
+        )
+
+        return res.json({
+            status: "ok",
+            message: "Пароль обновлён. Теперь можно войти с новым паролем."
+        })
+    } catch (err) {
+        console.log(err)
+        return res.status(500).json({ status: "error" })
     }
 }
 
@@ -575,6 +732,9 @@ app.get("/api/auth/me", authMiddleware, (req, res) => {
     })
 })
 
+app.put("/api/auth/me/secret-word", authMiddleware, updateSecretWordHandler)
+app.post("/api/auth/reset-password", resetPasswordHandler)
+
 app.post("/api/auth/logout", (req, res) => {
     clearAuthCookie(res)
     res.json({ status: "ok" })
@@ -597,6 +757,8 @@ app.delete("/api/users/me/favorites/:itemId", authMiddleware, deleteFavoriteHand
 app.use((req, res) => {
     res.sendFile(path.join(__dirname, "../frontend/index.html"))
 });
+
+
 
 app.listen(3000, ()=>{
     console.log("http://localhost:3000")

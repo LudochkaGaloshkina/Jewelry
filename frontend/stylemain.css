@@ -258,6 +258,84 @@ a {
     word-break: break-word;
 }
 
+.field {
+    display: grid;
+    gap: 8px;
+}
+
+.field-label {
+    color: rgba(247, 240, 228, 0.82);
+    font-size: 0.84rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.field input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 15px 16px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.07);
+    color: var(--text-main);
+    font: inherit;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.field input::placeholder {
+    color: rgba(247, 240, 228, 0.42);
+}
+
+.field input:focus {
+    border-color: rgba(231, 201, 143, 0.72);
+    background: rgba(255, 255, 255, 0.09);
+    box-shadow: 0 0 0 4px rgba(217, 187, 134, 0.12);
+}
+
+.profile-form {
+    display: grid;
+    gap: 16px;
+    margin-top: 28px;
+    max-width: 460px;
+}
+
+.profile-submit {
+    min-height: 54px;
+    border: 0;
+    border-radius: 18px;
+    background: linear-gradient(135deg, #f0d59b 0%, #d4ae69 50%, #b88647 100%);
+    color: #15110c;
+    font-family: "Cormorant Garamond", serif;
+    font-size: 1.35rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    box-shadow: 0 16px 34px rgba(170, 123, 50, 0.28);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+}
+
+.profile-submit:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.03);
+    box-shadow: 0 20px 38px rgba(170, 123, 50, 0.34);
+}
+
+.profile-submit:disabled {
+    opacity: 0.72;
+    cursor: wait;
+}
+
+.profile-message {
+    margin: 18px 0 0;
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-main);
+    font-size: 0.95rem;
+}
+
 .slider-meta {
     display: flex;
     justify-content: space-between;
