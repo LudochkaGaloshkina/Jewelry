@@ -9,26 +9,21 @@ export default {
     template: `
     <header class="site-header">
         <div class="header-tools">
-            <router-link
-                v-if="mode !== 'home'"
-                class="tool-button"
-                to="/"
-            >
+            <router-link class="tool-button" to="/">
                 На главную
             </router-link>
-            <button
-                v-else
+            <router-link
                 class="tool-button search-button"
-                type="button"
-                aria-label="Поиск"
+                to="/catalog"
+                aria-label="Каталог"
             >
                 <img
                     class="tool-icon-image"
-                    src="/free-icon-magnifier-2319177.png"
+                    src="/wedding-gift_17153035.png"
                     alt=""
                 >
-                <span>Поиск</span>
-            </button>
+                <span>Каталог</span>
+            </router-link>
         </div>
 
         <router-link class="home-brand" to="/">

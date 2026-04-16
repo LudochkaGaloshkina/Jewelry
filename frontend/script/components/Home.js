@@ -33,6 +33,45 @@ export default {
                     <button class="next" @click="next" aria-label="Следующий слайд">►</button>
                 </div>
             </section>
+
+            <section class="collection-section">
+                <div class="collection-heading">
+                    <div>
+                        <p class="hero-kicker">Популярное</p>
+                        <h2 class="collection-title">Украшения, которые сейчас выбирают чаще всего</h2>
+                    </div>
+                    <p class="collection-copy">
+                        Подборка популярных изделий из базы магазина: кольца, серьги,
+                        браслеты и колье с акцентом на премиальные материалы и выразительный блеск.
+                    </p>
+                </div>
+
+                <p v-if="itemsError" class="collection-state">{{ itemsError }}</p>
+                <p v-else-if="isItemsLoading" class="collection-state">Загружаем подборку украшений...</p>
+
+                <div v-else class="collection-grid">
+                    <article
+                        v-for="item in popularItems"
+                        :key="item.id"
+                        class="product-card"
+                    >
+                        <div class="product-media">
+                                <img :src="item.imageUrl" :alt="item.title">
+                            </div>
+                            <div class="product-body">
+                                <div class="product-meta">
+                                    <span class="product-category">{{ getCategoryLabel(item.category) }}</span>
+                                    <span v-if="item.isPopular" class="product-badge">Популярное</span>
+                                </div>
+                                <h3 class="product-title">{{ item.title }}</h3>
+                                <p class="product-description">{{ item.description }}</p>
+                                <div class="product-footer">
+                                    <strong class="product-price">{{ formatPrice(item.price) }}</strong>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+            </section>
         </main>
     </div>
     `,
@@ -40,6 +79,7 @@ export default {
     mounted() {
         this.setupSlider();
         this.startAutoSlide();
+        this.loadPopularItems();
     },
 
     beforeUnmount() {
@@ -55,11 +95,61 @@ export default {
                 '/script/Дима.jpg'
             ],
             currentIndex: 0,
-            autoSlideId: null
+            autoSlideId: null,
+            popularItems: [],
+            isItemsLoading: false,
+            itemsError: ''
         };
     },
 
     methods: {
+        getCategoryLabel(category) {
+            const labels = {
+                Rings: 'Кольца',
+                Earrings: 'Серьги',
+                Bracelets: 'Браслеты',
+                Necklaces: 'Колье',
+                Pendants: 'Подвески'
+            };
+
+            return labels[category] || category;
+        },
+
+        async loadPopularItems() {
+            this.isItemsLoading = true;
+            this.itemsError = '';
+
+            try {
+                const response = await fetch('/api/items?popular=true');
+                const result = await response.json();
+
+                if (!response.ok || result.status !== 'ok') {
+                    this.itemsError = 'Не удалось загрузить товары.';
+                    return;
+                }
+
+                this.popularItems = Array.isArray(result.items) ? result.items : [];
+            } catch (err) {
+                this.itemsError = 'Не удалось загрузить товары.';
+            } finally {
+                this.isItemsLoading = false;
+            }
+        },
+
+        formatPrice(value) {
+            const amount = Number(value);
+
+            if (Number.isNaN(amount)) {
+                return value;
+            }
+
+            return new Intl.NumberFormat('ru-RU', {
+                style: 'currency',
+                currency: 'RUB',
+                maximumFractionDigits: 0
+            }).format(amount);
+        },
+
         setupSlider() {
             const slider = this.$refs.slider;
 

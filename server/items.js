@@ -13,6 +13,11 @@ export function setupItems(app, db, authMiddleware) {
             const values = []
             let orderBy = "items.createdAt DESC"
 
+            if (req.query.q) {
+                conditions.push("(items.title LIKE ? OR items.description LIKE ?)")
+                values.push(`%${req.query.q}%`, `%${req.query.q}%`)
+            }
+
             if (req.query.category) {
                 conditions.push("items.category = ?")
                 values.push(req.query.category)
@@ -48,6 +53,8 @@ export function setupItems(app, db, authMiddleware) {
                 orderBy = "items.price ASC"
             } else if (req.query.sort === "price_desc") {
                 orderBy = "items.price DESC"
+            } else if (req.query.sort === "popular") {
+                orderBy = "items.isPopular DESC, items.createdAt DESC"
             }
 
             const whereClause = conditions.length > 0
