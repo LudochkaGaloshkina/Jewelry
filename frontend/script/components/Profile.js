@@ -13,10 +13,6 @@ export default {
             <section class="profile-card" v-if="user">
                 <p class="hero-kicker">Private Zone</p>
                 <h1 class="profile-title">Личный кабинет</h1>
-                <p class="profile-description">
-                    Здесь можно посмотреть данные аккаунта и поменять секретное слово для восстановления пароля.
-                </p>
-
                 <div class="profile-grid">
                     <div class="profile-item">
                         <span class="profile-label">Имя</span>
