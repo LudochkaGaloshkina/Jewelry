@@ -2,6 +2,7 @@ import Home from './components/Home.js';
 import Auth from './components/Auth.js';
 import Profile from './components/Profile.js';
 import Catalog from './components/Catalog.js';
+import ItemDetails from './components/ItemDetails.js';
 
 
 const { createRouter, createWebHistory } = window.VueRouter;
@@ -19,6 +20,7 @@ function updatePageStyle(path) {
 const routes = [
     { path: '/', component: Home },
     { path: '/catalog', component: Catalog },
+    { path: '/catalog/:id', component: ItemDetails },
     { path: '/auth/login', component: Auth, props: { mode: 'login' } },
     { path: '/auth/register', component: Auth, props: { mode: 'register' } },
     { path: '/profile', component: Profile, meta: { requiresAuth: true } },

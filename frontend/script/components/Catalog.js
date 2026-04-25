@@ -89,8 +89,14 @@ export default {
                                 </div>
                                 <h2 class="product-title">{{ item.title }}</h2>
                                 <p class="product-description">{{ item.description }}</p>
-                                <div class="product-footer">
+                                <div class="product-footer product-footer-actions">
                                     <strong class="product-price">{{ formatPrice(item.price) }}</strong>
+                                    <router-link
+                                        class="detail-link"
+                                        :to="'/catalog/' + item.id"
+                                    >
+                                        Подробнее
+                                    </router-link>
                                 </div>
                             </div>
                         </article>
@@ -107,7 +113,7 @@ export default {
             categories: ['Rings', 'Earrings', 'Bracelets', 'Necklaces', 'Pendants'],
             searchQuery: '',
             selectedCategory: '',
-            selectedSort: '',
+            selectedSort: 'popular',
             popularOnly: false,
             isLoading: false,
             errorMessage: '',

@@ -61,8 +61,15 @@ export default {
                                 </div>
                                 <h3 class="product-title">{{ item.title }}</h3>
                                 <p class="product-description">{{ item.description }}</p>
-                                <div class="product-footer">
+                                <div class="product-footer product-footer-actions">
                                     <strong class="product-price">{{ formatPrice(item.price) }}</strong>
+                                    <router-link
+                                        class="detail-link"
+                                        :to="'/catalog/' + item.id"
+                                    >
+                                        Подробнее
+                                    </router-link>
+                                </div>
                             </div>
                         </div>
                     </article>
@@ -141,7 +148,7 @@ export default {
 
             return new Intl.NumberFormat('ru-RU', {
                 style: 'currency',
-                currency: 'RUB',
+                currency: 'BYN',
                 maximumFractionDigits: 0
             }).format(amount);
         },
