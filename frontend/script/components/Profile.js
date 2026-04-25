@@ -38,6 +38,12 @@ export default {
                     </div>
                 </div>
 
+                <div class="profile-actions">
+                    <router-link class="detail-link profile-link-button" to="/favorites">
+                        Перейти в избранное
+                    </router-link>
+                </div>
+
                 <form class="profile-form" @submit.prevent="saveSecretWord">
                     <label class="field">
                         <span class="field-label">

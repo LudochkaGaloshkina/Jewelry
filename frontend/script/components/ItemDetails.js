@@ -68,17 +68,20 @@ export default {
                             </button>
                             <button
                                 type="button"
-                                class="detail-action secondary"
-                                disabled
-                                title="Функция появится позже"
+                                class="favorite-heart-button"
+                                :class="{ 'is-active': isFavorite, 'is-loading': isFavoriteActionLoading }"
+                                :disabled="isFavoriteActionLoading || !item"
+                                @click="addToFavorites"
+                                :aria-label="isFavorite ? 'Товар уже в избранном' : 'Добавить в избранное'"
+                                :title="isFavorite ? 'Товар уже в избранном' : 'Добавить в избранное'"
                             >
-                                Добавить в избранное
+                                <svg viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M12 20.8 4.9 13.9a4.8 4.8 0 0 1 0-6.9 4.9 4.9 0 0 1 7 0l.1.1.1-.1a4.9 4.9 0 0 1 7 0 4.8 4.8 0 0 1 0 6.9Z" />
+                                </svg>
                             </button>
                         </div>
 
-                        <p class="item-note">
-                            Кнопки пока отображаются как элементы интерфейса и будут подключены позже.
-                        </p>
+                        <p v-if="favoriteMessage" class="item-note">{{ favoriteMessage }}</p>
                     </div>
                 </section>
 
@@ -132,7 +135,10 @@ export default {
             item: null,
             relatedItems: [],
             isLoading: false,
-            errorMessage: ''
+            errorMessage: '',
+            isFavorite: false,
+            isFavoriteActionLoading: false,
+            favoriteMessage: ''
         };
     },
 
@@ -173,11 +179,29 @@ export default {
             }).format(amount);
         },
 
+        clearAuthCookie() {
+            document.cookie = 'authToken=; Path=/; Max-Age=0; SameSite=Lax';
+        },
+
+        getAuthHeaders() {
+            const token = sessionStorage.getItem('authToken');
+
+            if (!token) {
+                return null;
+            }
+
+            return {
+                Authorization: `Bearer ${token}`
+            };
+        },
+
         async loadPageData() {
             this.isLoading = true;
             this.errorMessage = '';
             this.item = null;
             this.relatedItems = [];
+            this.isFavorite = false;
+            this.favoriteMessage = '';
 
             try {
                 const itemId = this.$route.params.id;
@@ -190,6 +214,7 @@ export default {
                 }
 
                 this.item = itemResult.item;
+                await this.loadFavoriteState();
                 await this.loadRelatedItems(itemId);
             } catch (err) {
                 this.errorMessage = 'Не удалось загрузить товар.';
@@ -212,6 +237,92 @@ export default {
                     : [];
             } catch (err) {
                 this.relatedItems = [];
+            }
+        },
+
+        async loadFavoriteState() {
+            const headers = this.getAuthHeaders();
+
+            if (!headers || !this.item) {
+                this.isFavorite = false;
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/users/me/favorites', {
+                    credentials: 'include',
+                    headers
+                });
+                const result = await response.json();
+
+                if (response.status === 401) {
+                    throw new Error('Unauthorized');
+                }
+
+                if (!response.ok || result.status !== 'ok') {
+                    this.isFavorite = false;
+                    return;
+                }
+
+                this.isFavorite = Array.isArray(result.items)
+                    && result.items.some((favoriteItem) => favoriteItem.id === this.item.id);
+            } catch (err) {
+                if (err.message === 'Unauthorized') {
+                    this.clearAuthCookie();
+                    sessionStorage.removeItem('authToken');
+                    sessionStorage.removeItem('currentUser');
+                }
+
+                this.isFavorite = false;
+            }
+        },
+
+        async addToFavorites() {
+            if (!this.item || this.isFavorite || this.isFavoriteActionLoading) {
+                return;
+            }
+
+            const headers = this.getAuthHeaders();
+
+            if (!headers) {
+                this.$router.push('/auth/login');
+                return;
+            }
+
+            this.isFavoriteActionLoading = true;
+            this.favoriteMessage = '';
+
+            try {
+                const response = await fetch(`/api/users/me/favorites/${this.item.id}`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers
+                });
+                const result = await response.json();
+
+                if (response.status === 401) {
+                    throw new Error('Unauthorized');
+                }
+
+                if (!response.ok || result.status !== 'ok') {
+                    this.favoriteMessage = 'Не удалось добавить товар в избранное.';
+                    return;
+                }
+
+                this.isFavorite = true;
+                this.favoriteMessage = 'Товар добавлен в избранное.';
+            } catch (err) {
+                if (err.message === 'Unauthorized') {
+                    this.clearAuthCookie();
+                    sessionStorage.removeItem('authToken');
+                    sessionStorage.removeItem('currentUser');
+                    this.$router.push('/auth/login');
+                    return;
+                }
+
+                this.favoriteMessage = 'Не удалось добавить товар в избранное.';
+            } finally {
+                this.isFavoriteActionLoading = false;
             }
         }
     }
