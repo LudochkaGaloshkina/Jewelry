@@ -24,6 +24,10 @@ export default {
                 >
                 <span>Каталог</span>
             </router-link>
+            <router-link class="tool-button discount-link" to="/discount">
+                <span class="discount-link-mark">%</span>
+                <span>Скидки</span>
+            </router-link>
         </div>
 
         <router-link class="home-brand" to="/">

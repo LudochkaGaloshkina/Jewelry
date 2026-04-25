@@ -30,6 +30,7 @@ export default {
                     <div class="item-summary">
                         <div class="product-meta">
                             <span class="product-category">{{ getCategoryLabel(item.category) }}</span>
+                            <span v-if="item.isDiscounted" class="product-badge product-badge-discount">Скидка -{{ item.discountPercent }}%</span>
                             <span v-if="item.isPopular" class="product-badge">Популярное</span>
                         </div>
 
@@ -38,7 +39,10 @@ export default {
                             <h1 class="item-title">{{ item.title }}</h1>
                         </div>
 
-                        <p class="item-price">{{ formatPrice(item.price) }}</p>
+                        <div class="item-price-group">
+                            <p class="item-price">{{ formatPrice(getDisplayPrice(item)) }}</p>
+                            <p v-if="item.isDiscounted" class="item-price-old">{{ formatPrice(item.originalPrice) }}</p>
+                        </div>
 
                         <p class="item-description">{{ item.description }}</p>
 
@@ -49,11 +53,11 @@ export default {
                             </article>
                             <article class="item-highlight">
                                 <span class="profile-label">Статус</span>
-                                <strong>{{ item.isPopular ? 'Популярный товар' : 'Доступен в каталоге' }}</strong>
+                                <strong>{{ getItemStatus(item) }}</strong>
                             </article>
                             <article class="item-highlight">
                                 <span class="profile-label">Артикул</span>
-                                <strong>DB-{{ String(item.id).padStart(4, '0') }}</strong>
+                                <strong>{{ String(100000 + Number(item.id || 0)) }}</strong>
                             </article>
                         </div>
 
@@ -108,12 +112,16 @@ export default {
                             <div class="product-body">
                                 <div class="product-meta">
                                     <span class="product-category">{{ getCategoryLabel(relatedItem.category) }}</span>
+                                    <span v-if="relatedItem.isDiscounted" class="product-badge product-badge-discount">Скидка -{{ relatedItem.discountPercent }}%</span>
                                     <span v-if="relatedItem.isPopular" class="product-badge">Популярное</span>
                                 </div>
                                 <h2 class="product-title">{{ relatedItem.title }}</h2>
                                 <p class="product-description">{{ relatedItem.description }}</p>
                                 <div class="product-footer product-footer-actions">
-                                    <strong class="product-price">{{ formatPrice(relatedItem.price) }}</strong>
+                                    <div class="product-price-group">
+                                        <strong class="product-price">{{ formatPrice(getDisplayPrice(relatedItem)) }}</strong>
+                                        <span v-if="relatedItem.isDiscounted" class="product-price-old">{{ formatPrice(relatedItem.originalPrice) }}</span>
+                                    </div>
                                     <router-link
                                         class="detail-link"
                                         :to="'/catalog/' + relatedItem.id"
@@ -177,6 +185,18 @@ export default {
                 currency: 'BYN',
                 maximumFractionDigits: 0
             }).format(amount);
+        },
+
+        getDisplayPrice(item) {
+            return item?.isDiscounted ? item.finalPrice : item?.price;
+        },
+
+        getItemStatus(item) {
+            if (item?.isDiscounted) {
+                return `Скидка ${item.discountPercent}%`
+            }
+
+            return item?.isPopular ? 'Популярный товар' : 'Доступен в каталоге'
         },
 
         clearAuthCookie() {

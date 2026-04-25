@@ -57,12 +57,16 @@ export default {
                             <div class="product-body">
                                 <div class="product-meta">
                                     <span class="product-category">{{ getCategoryLabel(item.category) }}</span>
+                                    <span v-if="item.isDiscounted" class="product-badge product-badge-discount">Скидка -{{ item.discountPercent }}%</span>
                                     <span v-if="item.isPopular" class="product-badge">Популярное</span>
                                 </div>
                                 <h3 class="product-title">{{ item.title }}</h3>
                                 <p class="product-description">{{ item.description }}</p>
                                 <div class="product-footer product-footer-actions">
-                                    <strong class="product-price">{{ formatPrice(item.price) }}</strong>
+                                    <div class="product-price-group">
+                                        <strong class="product-price">{{ formatPrice(getDisplayPrice(item)) }}</strong>
+                                        <span v-if="item.isDiscounted" class="product-price-old">{{ formatPrice(item.originalPrice) }}</span>
+                                    </div>
                                     <router-link
                                         class="detail-link"
                                         :to="'/catalog/' + item.id"
@@ -151,6 +155,10 @@ export default {
                 currency: 'BYN',
                 maximumFractionDigits: 0
             }).format(amount);
+        },
+
+        getDisplayPrice(item) {
+            return item?.isDiscounted ? item.finalPrice : item?.price;
         },
 
         setupSlider() {

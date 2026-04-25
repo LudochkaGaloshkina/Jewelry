@@ -1,3 +1,5 @@
+import { applyItemPricing, applyPricingToItems } from "./itemPricing.js"
+
 export function setupItems(app, db, authMiddleware) {
     function requireAdmin(req, res, next) {
         if (req.user.role !== "admin") {
@@ -67,6 +69,7 @@ export function setupItems(app, db, authMiddleware) {
                     items.title,
                     items.description,
                     items.price,
+                    items.discount,
                     items.imageUrl,
                     items.category,
                     items.isPopular,
@@ -76,9 +79,14 @@ export function setupItems(app, db, authMiddleware) {
                 ORDER BY ${orderBy}
             `, values)
 
+            const pricedItems = applyPricingToItems(rows)
+            const filteredItems = req.query.discount === "true"
+                ? pricedItems.filter((item) => item.isDiscounted)
+                : pricedItems
+
             res.json({
                 status: "ok",
-                items: rows
+                items: filteredItems
             })
         } catch (err) {
             console.log(err)
@@ -100,6 +108,7 @@ export function setupItems(app, db, authMiddleware) {
                     items.title,
                     items.description,
                     items.price,
+                    items.discount,
                     items.imageUrl,
                     items.category,
                     items.isPopular,
@@ -115,7 +124,7 @@ export function setupItems(app, db, authMiddleware) {
 
             res.json({
                 status: "ok",
-                item: rows[0]
+                item: applyItemPricing(rows[0])
             })
         } catch (err) {
             console.log(err)
@@ -125,20 +134,29 @@ export function setupItems(app, db, authMiddleware) {
 
     async function createItemHandler(req, res) {
         try {
-            const { title, description, price, imageUrl, category, isPopular } = req.body
+            const { title, description, price, discount, imageUrl, category, isPopular } = req.body
             const normalizedPrice = Number(price)
+            const normalizedDiscount = Number(discount ?? 0)
 
-            if (!title || !description || !category || Number.isNaN(normalizedPrice)) {
+            if (
+                !title
+                || !description
+                || !category
+                || Number.isNaN(normalizedPrice)
+                || Number.isNaN(normalizedDiscount)
+                || normalizedDiscount < 0
+            ) {
                 return res.status(400).json({ status: "error", message: "missing fields" })
             }
 
             const [result] = await db.execute(`
-                INSERT INTO items (title, description, price, imageUrl, category, isPopular)
-                VALUES (?, ?, ?, ?, ?, ?)
+                INSERT INTO items (title, description, price, discount, imageUrl, category, isPopular)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
             `, [
                 title,
                 description,
                 normalizedPrice,
+                normalizedDiscount,
                 imageUrl || null,
                 category,
                 Boolean(isPopular)
@@ -150,6 +168,7 @@ export function setupItems(app, db, authMiddleware) {
                     items.title,
                     items.description,
                     items.price,
+                    items.discount,
                     items.imageUrl,
                     items.category,
                     items.isPopular,
@@ -161,7 +180,7 @@ export function setupItems(app, db, authMiddleware) {
 
             res.status(201).json({
                 status: "ok",
-                item: rows[0]
+                item: applyItemPricing(rows[0])
             })
         } catch (err) {
             console.log(err)
@@ -172,14 +191,22 @@ export function setupItems(app, db, authMiddleware) {
     async function updateItemHandler(req, res) {
         try {
             const itemId = Number(req.params.id)
-            const { title, description, price, imageUrl, category, isPopular } = req.body
+            const { title, description, price, discount, imageUrl, category, isPopular } = req.body
             const normalizedPrice = Number(price)
+            const normalizedDiscount = Number(discount ?? 0)
 
             if (!Number.isInteger(itemId) || itemId <= 0) {
                 return res.status(400).json({ status: "error", message: "invalid id" })
             }
 
-            if (!title || !description || !category || Number.isNaN(normalizedPrice)) {
+            if (
+                !title
+                || !description
+                || !category
+                || Number.isNaN(normalizedPrice)
+                || Number.isNaN(normalizedDiscount)
+                || normalizedDiscount < 0
+            ) {
                 return res.status(400).json({ status: "error", message: "missing fields" })
             }
 
@@ -194,12 +221,13 @@ export function setupItems(app, db, authMiddleware) {
 
             await db.execute(`
                 UPDATE items
-                SET title=?, description=?, price=?, imageUrl=?, category=?, isPopular=?
+                SET title=?, description=?, price=?, discount=?, imageUrl=?, category=?, isPopular=?
                 WHERE id=?
             `, [
                 title,
                 description,
                 normalizedPrice,
+                normalizedDiscount,
                 imageUrl || null,
                 category,
                 Boolean(isPopular),
@@ -212,6 +240,7 @@ export function setupItems(app, db, authMiddleware) {
                     items.title,
                     items.description,
                     items.price,
+                    items.discount,
                     items.imageUrl,
                     items.category,
                     items.isPopular,
@@ -223,7 +252,7 @@ export function setupItems(app, db, authMiddleware) {
 
             res.json({
                 status: "ok",
-                item: rows[0]
+                item: applyItemPricing(rows[0])
             })
         } catch (err) {
             console.log(err)

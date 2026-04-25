@@ -1,3 +1,5 @@
+import { applyPricingToItems } from "./itemPricing.js"
+
 export function setupFavorites(app, db, authMiddleware) {
     async function listFavoritesHandler(req, res) {
         try {
@@ -7,6 +9,7 @@ export function setupFavorites(app, db, authMiddleware) {
                     items.title,
                     items.description,
                     items.price,
+                    items.discount,
                     items.imageUrl,
                     items.category,
                     items.isPopular,
@@ -19,7 +22,7 @@ export function setupFavorites(app, db, authMiddleware) {
 
             res.json({
                 status: "ok",
-                items: rows
+                items: applyPricingToItems(rows)
             })
         } catch (err) {
             console.log(err)

@@ -4,6 +4,7 @@ import Profile from './components/Profile.js';
 import Catalog from './components/Catalog.js';
 import ItemDetails from './components/ItemDetails.js';
 import Favorites from './components/Favorites.js';
+import Discount from './components/Discount.js';
 
 
 const { createRouter, createWebHistory } = window.VueRouter;
@@ -22,6 +23,7 @@ const routes = [
     { path: '/', component: Home },
     { path: '/catalog', component: Catalog },
     { path: '/catalog/:id', component: ItemDetails },
+    { path: '/discount', component: Discount },
     { path: '/favorites', component: Favorites, meta: { requiresAuth: true } },
     { path: '/auth/login', component: Auth, props: { mode: 'login' } },
     { path: '/auth/register', component: Auth, props: { mode: 'register' } },
