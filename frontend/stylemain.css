@@ -837,6 +837,26 @@ a {
     flex-wrap: wrap;
 }
 
+.favorites-section .collection-grid {
+    align-items: stretch;
+}
+
+.favorites-section .product-card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.favorites-section .product-body {
+    flex: 1;
+    grid-template-rows: auto auto 1fr auto auto;
+    align-content: start;
+}
+
+.favorites-section .product-footer {
+    margin-top: auto;
+}
+
 .favorites-remove {
     min-height: 46px;
     padding: 0 16px;
