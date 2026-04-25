@@ -40,10 +40,6 @@ export default {
                         <p class="hero-kicker">Популярное</p>
                         <h2 class="collection-title">Украшения, которые сейчас выбирают чаще всего</h2>
                     </div>
-                    <p class="collection-copy">
-                        Подборка популярных изделий из базы магазина: кольца, серьги,
-                        браслеты и колье с акцентом на премиальные материалы и выразительный блеск.
-                    </p>
                 </div>
 
                 <p v-if="itemsError" class="collection-state">{{ itemsError }}</p>

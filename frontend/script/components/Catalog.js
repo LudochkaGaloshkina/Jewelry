@@ -13,10 +13,6 @@ export default {
             <section class="catalog-hero">
                 <p class="hero-kicker">Каталог</p>
                 <h1 class="catalog-title">Полная коллекция украшений Diamond Blackstar</h1>
-                <p class="catalog-description">
-                    Исследуйте кольца, серьги, браслеты, колье и подвески с фильтрацией по категории,
-                    поиском по названию и удобной сортировкой.
-                </p>
             </section>
 
             <section class="catalog-layout">
@@ -48,7 +44,6 @@ export default {
                     <label class="field">
                         <span class="field-label">Сортировка</span>
                         <select v-model="selectedSort" @change="loadItems">
-                            <option value="">Сначала новинки</option>
                             <option value="popular">Сначала популярные</option>
                             <option value="price_asc">Сначала дешевле</option>
                             <option value="price_desc">Сначала дороже</option>
@@ -152,7 +147,7 @@ export default {
 
             return new Intl.NumberFormat('ru-RU', {
                 style: 'currency',
-                currency: 'RUB',
+                currency: 'BYN',
                 maximumFractionDigits: 0
             }).format(amount);
         },
