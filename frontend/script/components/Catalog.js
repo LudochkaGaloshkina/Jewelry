@@ -29,7 +29,7 @@ export default {
 
                     <label class="field">
                         <span class="field-label">Категория</span>
-                        <select v-model="selectedCategory" @change="loadItems">
+                        <select v-model="selectedCategory" @change="resetFiltersPage">
                             <option value="">Все категории</option>
                             <option
                                 v-for="category in categories"
@@ -43,7 +43,7 @@ export default {
 
                     <label class="field">
                         <span class="field-label">Сортировка</span>
-                        <select v-model="selectedSort" @change="loadItems">
+                        <select v-model="selectedSort" @change="resetFiltersPage">
                             <option value="popular">Сначала популярные</option>
                             <option value="price_asc">Сначала дешевле</option>
                             <option value="price_desc">Сначала дороже</option>
@@ -54,7 +54,7 @@ export default {
                         <input
                             v-model="popularOnly"
                             type="checkbox"
-                            @change="loadItems"
+                            @change="resetFiltersPage"
                         >
                         <span>Показывать только популярные</span>
                     </label>
@@ -63,11 +63,14 @@ export default {
                 <section class="catalog-results">
                     <div class="catalog-meta">
                         <p class="catalog-count">
-                            {{ isLoading ? 'Загрузка...' : 'Найдено: ' + items.length }}
+                            {{ isLoading ? 'Загрузка...' : 'Найдено: ' + totalItems }}
+                        </p>
+                        <p v-if="totalPages > 1" class="catalog-page-indicator">
+                            Страница {{ currentPage }} из {{ totalPages }}
                         </p>
                     </div>
 
-                    <p v-if="errorMessage" class="collection-state">{{ errorMessage }}</p>
+                    <p v-if="errorMessage" class="collection-state collection-state-error">{{ errorMessage }}</p>
                     <p v-else-if="isLoading" class="collection-state">Подбираем украшения...</p>
                     <p v-else-if="items.length === 0" class="collection-state">
                         По текущим фильтрам товаров не найдено.
@@ -105,6 +108,37 @@ export default {
                             </div>
                         </article>
                     </div>
+
+                    <nav v-if="!isLoading && !errorMessage && totalPages > 1" class="catalog-pagination" aria-label="Пагинация каталога">
+                        <button
+                            type="button"
+                            class="pagination-button"
+                            :disabled="currentPage === 1"
+                            @click="goToPage(currentPage - 1)"
+                        >
+                            Назад
+                        </button>
+
+                        <button
+                            v-for="pageNumber in visiblePages"
+                            :key="pageNumber"
+                            type="button"
+                            class="pagination-button"
+                            :class="{ 'is-active': pageNumber === currentPage }"
+                            @click="goToPage(pageNumber)"
+                        >
+                            {{ pageNumber }}
+                        </button>
+
+                        <button
+                            type="button"
+                            class="pagination-button"
+                            :disabled="currentPage === totalPages"
+                            @click="goToPage(currentPage + 1)"
+                        >
+                            Вперёд
+                        </button>
+                    </nav>
                 </section>
             </section>
         </main>
@@ -121,8 +155,27 @@ export default {
             popularOnly: false,
             isLoading: false,
             errorMessage: '',
-            searchDebounceId: null
+            searchDebounceId: null,
+            currentPage: 1,
+            itemsPerPage: 6,
+            totalPages: 0,
+            totalItems: 0
         };
+    },
+
+    computed: {
+        visiblePages() {
+            const pages = [];
+            const startPage = Math.max(1, this.currentPage - 1);
+            const endPage = Math.min(this.totalPages, startPage + 2);
+            const normalizedStart = Math.max(1, endPage - 2);
+
+            for (let pageNumber = normalizedStart; pageNumber <= endPage; pageNumber += 1) {
+                pages.push(pageNumber);
+            }
+
+            return pages;
+        }
     },
 
     mounted() {
@@ -172,8 +225,33 @@ export default {
             }
 
             this.searchDebounceId = setTimeout(() => {
+                this.currentPage = 1;
                 this.loadItems();
             }, 250);
+        },
+
+        resetFiltersPage() {
+            this.currentPage = 1;
+            this.loadItems();
+        },
+
+        goToPage(pageNumber) {
+            if (pageNumber === this.currentPage || pageNumber < 1 || pageNumber > this.totalPages) {
+                return;
+            }
+
+            this.currentPage = pageNumber;
+            this.loadItems();
+        },
+
+        getApiErrorMessage(result, fallbackMessage) {
+            const serverMessage = typeof result?.message === 'string' ? result.message.trim() : '';
+
+            if (serverMessage) {
+                return `${fallbackMessage} ${serverMessage}.`;
+            }
+
+            return fallbackMessage;
         },
 
         async loadItems() {
@@ -199,17 +277,29 @@ export default {
                     params.set('popular', 'true');
                 }
 
-                const response = await fetch(`/api/items?${params.toString()}`);
-                const result = await response.json();
+                params.set('page', String(this.currentPage));
+                params.set('limit', String(this.itemsPerPage));
 
-                if (!response.ok || result.status !== 'ok') {
-                    this.errorMessage = 'Не удалось загрузить каталог.';
+                const response = await fetch(`/api/items?${params.toString()}`);
+                const result = await response.json().catch(() => null);
+
+                if (!response.ok || result?.status !== 'ok') {
+                    this.items = [];
+                    this.totalItems = 0;
+                    this.totalPages = 0;
+                    this.errorMessage = this.getApiErrorMessage(result, 'Не удалось загрузить каталог.');
                     return;
                 }
 
                 this.items = Array.isArray(result.items) ? result.items : [];
+                this.totalItems = Number(result.pagination?.totalItems) || this.items.length;
+                this.totalPages = Number(result.pagination?.totalPages) || (this.totalItems > 0 ? 1 : 0);
+                this.currentPage = Number(result.pagination?.page) || 1;
             } catch (err) {
-                this.errorMessage = 'Не удалось загрузить каталог.';
+                this.items = [];
+                this.totalItems = 0;
+                this.totalPages = 0;
+                this.errorMessage = 'Не удалось загрузить каталог. Проверьте подключение к API и попробуйте ещё раз.';
             } finally {
                 this.isLoading = false;
             }

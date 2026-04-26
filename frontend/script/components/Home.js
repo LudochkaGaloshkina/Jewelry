@@ -42,7 +42,7 @@ export default {
                     </div>
                 </div>
 
-                <p v-if="itemsError" class="collection-state">{{ itemsError }}</p>
+                <p v-if="itemsError" class="collection-state collection-state-error">{{ itemsError }}</p>
                 <p v-else-if="isItemsLoading" class="collection-state">Загружаем подборку украшений...</p>
 
                 <div v-else class="collection-grid">
@@ -75,7 +75,6 @@ export default {
                                     </router-link>
                                 </div>
                             </div>
-                        </div>
                     </article>
                 </div>
             </section>
@@ -87,10 +86,12 @@ export default {
         this.setupSlider();
         this.startAutoSlide();
         this.loadPopularItems();
+        window.addEventListener('resize', this.handleResize);
     },
 
     beforeUnmount() {
         this.stopAutoSlide();
+        window.removeEventListener('resize', this.handleResize);
     },
 
     data() {
@@ -122,22 +123,34 @@ export default {
             return labels[category] || category;
         },
 
+        getApiErrorMessage(result, fallbackMessage) {
+            const serverMessage = typeof result?.message === 'string' ? result.message.trim() : '';
+
+            if (serverMessage) {
+                return `${fallbackMessage} ${serverMessage}.`;
+            }
+
+            return fallbackMessage;
+        },
+
         async loadPopularItems() {
             this.isItemsLoading = true;
             this.itemsError = '';
 
             try {
                 const response = await fetch('/api/items?popular=true');
-                const result = await response.json();
+                const result = await response.json().catch(() => null);
 
-                if (!response.ok || result.status !== 'ok') {
-                    this.itemsError = 'Не удалось загрузить товары.';
+                if (!response.ok || result?.status !== 'ok') {
+                    this.popularItems = [];
+                    this.itemsError = this.getApiErrorMessage(result, 'Не удалось загрузить товары.');
                     return;
                 }
 
                 this.popularItems = Array.isArray(result.items) ? result.items : [];
             } catch (err) {
-                this.itemsError = 'Не удалось загрузить товары.';
+                this.popularItems = [];
+                this.itemsError = 'Не удалось загрузить товары. Проверьте подключение к API и попробуйте ещё раз.';
             } finally {
                 this.isItemsLoading = false;
             }
@@ -201,8 +214,17 @@ export default {
             this.update();
         },
 
+        handleResize() {
+            this.update();
+        },
+
         update() {
             const slider = this.$refs.slider;
+
+            if (!slider) {
+                return;
+            }
+
             const width = slider.clientWidth;
             slider.style.transform = `translateX(-${this.currentIndex * width}px)`;
         }

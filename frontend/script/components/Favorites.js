@@ -27,7 +27,7 @@ export default {
                     </router-link>
                 </div>
 
-                <p v-if="errorMessage" class="collection-state">{{ errorMessage }}</p>
+                <p v-if="errorMessage" class="collection-state collection-state-error">{{ errorMessage }}</p>
                 <p v-else-if="isLoading" class="collection-state">Загружаем избранные товары...</p>
                 <p v-else-if="items.length === 0" class="collection-state">
                     В избранном пока нет товаров.
@@ -126,6 +126,16 @@ export default {
             return item?.isDiscounted ? item.finalPrice : item?.price;
         },
 
+        getApiErrorMessage(result, fallbackMessage) {
+            const serverMessage = typeof result?.message === 'string' ? result.message.trim() : '';
+
+            if (serverMessage) {
+                return `${fallbackMessage} ${serverMessage}.`;
+            }
+
+            return fallbackMessage;
+        },
+
         getAuthHeaders() {
             const token = sessionStorage.getItem('authToken');
 
@@ -154,18 +164,18 @@ export default {
                     credentials: 'include',
                     headers
                 });
-                const result = await response.json();
+                const result = await response.json().catch(() => null);
 
                 if (response.status === 401) {
                     throw new Error('Unauthorized');
                 }
 
-                if (!response.ok || result.status !== 'ok') {
-                    this.errorMessage = 'Не удалось загрузить избранные товары.';
+                if (!response.ok || result?.status !== 'ok') {
+                    this.errorMessage = this.getApiErrorMessage(result, 'Не удалось загрузить избранные товары.');
                     return;
                 }
 
-                this.items = Array.isArray(result.items) ? result.items : [];
+                this.items = Array.isArray(result?.items) ? result.items : [];
             } catch (err) {
                 if (err.message === 'Unauthorized') {
                     this.clearAuthCookie();
@@ -175,7 +185,7 @@ export default {
                     return;
                 }
 
-                this.errorMessage = 'Не удалось загрузить избранные товары.';
+                this.errorMessage = 'Не удалось загрузить избранные товары. Проверьте подключение к API и попробуйте ещё раз.';
             } finally {
                 this.isLoading = false;
             }
@@ -197,14 +207,14 @@ export default {
                     credentials: 'include',
                     headers
                 });
-                const result = await response.json();
+                const result = await response.json().catch(() => null);
 
                 if (response.status === 401) {
                     throw new Error('Unauthorized');
                 }
 
-                if (!response.ok || result.status !== 'ok') {
-                    this.errorMessage = 'Не удалось удалить товар из избранного.';
+                if (!response.ok || result?.status !== 'ok') {
+                    this.errorMessage = this.getApiErrorMessage(result, 'Не удалось удалить товар из избранного.');
                     return;
                 }
 
@@ -218,7 +228,7 @@ export default {
                     return;
                 }
 
-                this.errorMessage = 'Не удалось удалить товар из избранного.';
+                this.errorMessage = 'Не удалось удалить товар из избранного. Проверьте подключение к API и попробуйте ещё раз.';
             } finally {
                 this.removingItemId = null;
             }

@@ -11,7 +11,7 @@ export default {
 
         <main class="home-content">
             <p v-if="isLoading" class="collection-state">Загружаем карточку украшения...</p>
-            <p v-else-if="errorMessage" class="collection-state">{{ errorMessage }}</p>
+            <p v-else-if="errorMessage" class="collection-state collection-state-error">{{ errorMessage }}</p>
 
             <template v-else-if="item">
                 <section class="item-breadcrumbs">
@@ -50,10 +50,6 @@ export default {
                             <article class="item-highlight">
                                 <span class="profile-label">Категория</span>
                                 <strong>{{ getCategoryLabel(item.category) }}</strong>
-                            </article>
-                            <article class="item-highlight">
-                                <span class="profile-label">Статус</span>
-                                <strong>{{ getItemStatus(item) }}</strong>
                             </article>
                             <article class="item-highlight">
                                 <span class="profile-label">Артикул</span>
@@ -191,16 +187,18 @@ export default {
             return item?.isDiscounted ? item.finalPrice : item?.price;
         },
 
-        getItemStatus(item) {
-            if (item?.isDiscounted) {
-                return `Скидка ${item.discountPercent}%`
-            }
-
-            return item?.isPopular ? 'Популярный товар' : 'Доступен в каталоге'
-        },
-
         clearAuthCookie() {
             document.cookie = 'authToken=; Path=/; Max-Age=0; SameSite=Lax';
+        },
+
+        getApiErrorMessage(result, fallbackMessage) {
+            const serverMessage = typeof result?.message === 'string' ? result.message.trim() : '';
+
+            if (serverMessage) {
+                return `${fallbackMessage} ${serverMessage}.`;
+            }
+
+            return fallbackMessage;
         },
 
         getAuthHeaders() {
@@ -226,10 +224,10 @@ export default {
             try {
                 const itemId = this.$route.params.id;
                 const itemResponse = await fetch(`/api/items/${itemId}`);
-                const itemResult = await itemResponse.json();
+                const itemResult = await itemResponse.json().catch(() => null);
 
-                if (!itemResponse.ok || itemResult.status !== 'ok' || !itemResult.item) {
-                    this.errorMessage = 'Не удалось загрузить товар.';
+                if (!itemResponse.ok || itemResult?.status !== 'ok' || !itemResult?.item) {
+                    this.errorMessage = this.getApiErrorMessage(itemResult, 'Не удалось загрузить товар.');
                     return;
                 }
 
@@ -237,7 +235,7 @@ export default {
                 await this.loadFavoriteState();
                 await this.loadRelatedItems(itemId);
             } catch (err) {
-                this.errorMessage = 'Не удалось загрузить товар.';
+                this.errorMessage = 'Не удалось загрузить товар. Проверьте подключение к API и попробуйте ещё раз.';
             } finally {
                 this.isLoading = false;
             }
@@ -246,9 +244,9 @@ export default {
         async loadRelatedItems(itemId) {
             try {
                 const relatedResponse = await fetch(`/api/items?related=${itemId}`);
-                const relatedResult = await relatedResponse.json();
+                const relatedResult = await relatedResponse.json().catch(() => null);
 
-                if (!relatedResponse.ok || relatedResult.status !== 'ok') {
+                if (!relatedResponse.ok || relatedResult?.status !== 'ok') {
                     return;
                 }
 
@@ -273,18 +271,18 @@ export default {
                     credentials: 'include',
                     headers
                 });
-                const result = await response.json();
+                const result = await response.json().catch(() => null);
 
                 if (response.status === 401) {
                     throw new Error('Unauthorized');
                 }
 
-                if (!response.ok || result.status !== 'ok') {
+                if (!response.ok || result?.status !== 'ok') {
                     this.isFavorite = false;
                     return;
                 }
 
-                this.isFavorite = Array.isArray(result.items)
+                this.isFavorite = Array.isArray(result?.items)
                     && result.items.some((favoriteItem) => favoriteItem.id === this.item.id);
             } catch (err) {
                 if (err.message === 'Unauthorized') {
@@ -318,14 +316,14 @@ export default {
                     credentials: 'include',
                     headers
                 });
-                const result = await response.json();
+                const result = await response.json().catch(() => null);
 
                 if (response.status === 401) {
                     throw new Error('Unauthorized');
                 }
 
-                if (!response.ok || result.status !== 'ok') {
-                    this.favoriteMessage = 'Не удалось добавить товар в избранное.';
+                if (!response.ok || result?.status !== 'ok') {
+                    this.favoriteMessage = this.getApiErrorMessage(result, 'Не удалось добавить товар в избранное.');
                     return;
                 }
 
@@ -340,7 +338,7 @@ export default {
                     return;
                 }
 
-                this.favoriteMessage = 'Не удалось добавить товар в избранное.';
+                this.favoriteMessage = 'Не удалось добавить товар в избранное. Проверьте подключение к API и попробуйте ещё раз.';
             } finally {
                 this.isFavoriteActionLoading = false;
             }

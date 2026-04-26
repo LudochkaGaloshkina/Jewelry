@@ -14,6 +14,12 @@ export function setupItems(app, db, authMiddleware) {
             const conditions = []
             const values = []
             let orderBy = "items.createdAt DESC"
+            const requestedPage = Number.parseInt(req.query.page, 10)
+            const requestedLimit = Number.parseInt(req.query.limit, 10)
+            const page = Number.isInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1
+            const limit = Number.isInteger(requestedLimit) && requestedLimit > 0
+                ? Math.min(requestedLimit, 24)
+                : null
 
             if (req.query.q) {
                 conditions.push("(items.title LIKE ? OR items.description LIKE ?)")
@@ -63,7 +69,7 @@ export function setupItems(app, db, authMiddleware) {
                 ? `WHERE ${conditions.join(" AND ")}`
                 : ""
 
-            const [rows] = await db.execute(`
+            const selectQuery = `
                 SELECT
                     items.id,
                     items.title,
@@ -77,16 +83,30 @@ export function setupItems(app, db, authMiddleware) {
                 FROM items
                 ${whereClause}
                 ORDER BY ${orderBy}
-            `, values)
+            `
+
+            const [rows] = await db.execute(selectQuery, values)
 
             const pricedItems = applyPricingToItems(rows)
             const filteredItems = req.query.discount === "true"
                 ? pricedItems.filter((item) => item.isDiscounted)
                 : pricedItems
+            const totalItems = filteredItems.length
+            const totalPages = limit ? Math.max(1, Math.ceil(totalItems / limit)) : (totalItems > 0 ? 1 : 0)
+            const currentPage = limit ? Math.min(page, totalPages || 1) : 1
+            const paginatedItems = limit
+                ? filteredItems.slice((currentPage - 1) * limit, currentPage * limit)
+                : filteredItems
 
             res.json({
                 status: "ok",
-                items: filteredItems
+                items: paginatedItems,
+                pagination: {
+                    page: currentPage,
+                    limit: limit || totalItems,
+                    totalItems,
+                    totalPages
+                }
             })
         } catch (err) {
             console.log(err)
