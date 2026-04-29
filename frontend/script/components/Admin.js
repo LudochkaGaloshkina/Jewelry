@@ -212,7 +212,6 @@ export default {
 
     data() {
         return {
-            currentUser: null,
             accessMessage: '',
             activeSection: 'items',
             categories: ['Rings', 'Earrings', 'Bracelets', 'Necklaces', 'Pendants'],
@@ -227,6 +226,12 @@ export default {
             usersMessage: '',
             itemForm: this.getEmptyItemForm()
         };
+    },
+
+    computed: {
+        currentUser() {
+            return this.$store.state.user;
+        }
     },
 
     async mounted() {
@@ -256,52 +261,30 @@ export default {
         },
 
         getAuthHeaders() {
-            const token = sessionStorage.getItem('authToken');
-
-            return {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}`
-            };
-        },
-
-        clearAuthCookie() {
-            document.cookie = 'authToken=; Path=/; Max-Age=0; SameSite=Lax';
+            return this.$store.getters.jsonAuthHeaders;
         },
 
         async loadAdminProfile() {
-            const token = sessionStorage.getItem('authToken');
-
-            if (!token) {
+            if (!this.$store.getters.isAuthenticated) {
                 this.$router.replace('/auth/login');
                 return false;
             }
 
             try {
-                const response = await fetch('/api/auth/me', {
-                    credentials: 'include',
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                });
-                const result = await response.json().catch(() => null);
+                const user = await this.$store.dispatch('refreshUser');
 
-                if (!response.ok || result?.status !== 'ok') {
+                if (!user) {
                     throw new Error('Unauthorized');
                 }
 
-                if (result.user.role !== 'admin') {
+                if (user.role !== 'admin') {
                     this.accessMessage = 'Эта страница доступна только администратору.';
                     return false;
                 }
 
-                this.currentUser = result.user;
-                sessionStorage.setItem('currentUser', JSON.stringify(result.user));
-                window.dispatchEvent(new Event('auth-changed'));
                 return true;
             } catch (err) {
-                this.clearAuthCookie();
-                sessionStorage.removeItem('authToken');
-                sessionStorage.removeItem('currentUser');
+                this.$store.dispatch('clearAuth');
                 this.$router.replace('/auth/login');
                 return false;
             }

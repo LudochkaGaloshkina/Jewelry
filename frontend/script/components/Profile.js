@@ -82,38 +82,22 @@ export default {
     },
 
     methods: {
-        clearAuthCookie() {
-            document.cookie = 'authToken=; Path=/; Max-Age=0; SameSite=Lax';
-        },
-
         async loadProfile() {
-            const token = sessionStorage.getItem('authToken');
-
-            if (!token) {
+            if (!this.$store.getters.isAuthenticated) {
                 this.$router.replace('/auth/login');
                 return;
             }
 
             try {
-                const response = await fetch('/api/auth/me', {
-                    credentials: 'include',
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                });
+                const user = await this.$store.dispatch('refreshUser');
 
-                const result = await response.json();
-
-                if (!response.ok || result.status !== 'ok') {
+                if (!user) {
                     throw new Error('Unauthorized');
                 }
 
-                this.user = result.user;
-                sessionStorage.setItem('currentUser', JSON.stringify(result.user));
+                this.user = user;
             } catch (err) {
-                this.clearAuthCookie();
-                sessionStorage.removeItem('authToken');
-                sessionStorage.removeItem('currentUser');
+                this.$store.dispatch('clearAuth');
                 this.$router.replace('/auth/login');
             }
         },
@@ -136,9 +120,7 @@ export default {
                 return;
             }
 
-            const token = sessionStorage.getItem('authToken');
-
-            if (!token) {
+            if (!this.$store.getters.isAuthenticated) {
                 this.$router.replace('/auth/login');
                 return;
             }
@@ -152,7 +134,7 @@ export default {
                     credentials: 'include',
                     headers: {
                         'Content-Type': 'application/json',
-                        Authorization: `Bearer ${token}`
+                        Authorization: `Bearer ${this.$store.state.token}`
                     },
                     body: JSON.stringify({
                         secretWord: this.secretWord
@@ -169,7 +151,7 @@ export default {
                 this.user = result.user;
                 this.secretWord = '';
                 this.message = result.message;
-                sessionStorage.setItem('currentUser', JSON.stringify(result.user));
+                this.$store.commit('setUser', result.user);
             } catch (err) {
                 this.message = 'Ошибка соединения с сервером.';
             } finally {

@@ -76,50 +76,21 @@ export default {
     </header>
     `,
 
-    data() {
-        return {
-            currentUser: null
-        };
+    computed: {
+        currentUser() {
+            return this.$store.state.user;
+        }
     },
 
     mounted() {
-        this.loadCurrentUser();
-        window.addEventListener('auth-changed', this.loadCurrentUser);
-    },
-
-    beforeUnmount() {
-        window.removeEventListener('auth-changed', this.loadCurrentUser);
+        if (this.$store.getters.isAuthenticated && !this.currentUser) {
+            this.$store.dispatch('refreshUser');
+        }
     },
 
     methods: {
-        clearAuthCookie() {
-            document.cookie = 'authToken=; Path=/; Max-Age=0; SameSite=Lax';
-        },
-
-        loadCurrentUser() {
-            try {
-                const rawUser = sessionStorage.getItem('currentUser');
-                this.currentUser = rawUser ? JSON.parse(rawUser) : null;
-            } catch (err) {
-                this.currentUser = null;
-            }
-        },
-
         async logout() {
-            try {
-                await fetch('/api/auth/logout', {
-                    method: 'POST',
-                    credentials: 'include'
-                });
-            } catch (err) {
-                // local cleanup is enough if the request fails
-            }
-
-            this.clearAuthCookie();
-            sessionStorage.removeItem('authToken');
-            sessionStorage.removeItem('currentUser');
-            this.currentUser = null;
-            window.dispatchEvent(new Event('auth-changed'));
+            await this.$store.dispatch('logout');
 
             if (this.$route.meta.requiresAuth) {
                 this.$router.push('/auth/login');

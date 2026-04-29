@@ -194,10 +194,6 @@ export default {
     },
 
     methods: {
-        persistAuthToken(token) {
-            document.cookie = `authToken=${encodeURIComponent(token)}; Path=/; Max-Age=${60 * 60 * 24 * 7}; SameSite=Lax`;
-        },
-
         toggleRecovery() {
             this.isRecoveryVisible = !this.isRecoveryVisible;
             this.message = '';
@@ -279,10 +275,10 @@ export default {
                     return;
                 }
 
-                this.persistAuthToken(result.token);
-                sessionStorage.setItem('authToken', result.token);
-                sessionStorage.setItem('currentUser', JSON.stringify(result.user));
-                window.dispatchEvent(new Event('auth-changed'));
+                this.$store.dispatch('setAuth', {
+                    token: result.token,
+                    user: result.user
+                });
                 this.$router.push('/profile');
             } catch (err) {
                 this.message = 'Ошибка соединения с сервером.';

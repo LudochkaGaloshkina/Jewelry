@@ -6,6 +6,7 @@ import ItemDetails from './components/ItemDetails.js';
 import Favorites from './components/Favorites.js';
 import Discount from './components/Discount.js';
 import Admin from './components/Admin.js';
+import { store } from './store.js';
 
 
 const { createRouter, createWebHistory } = window.VueRouter;
@@ -38,25 +39,15 @@ export const router = createRouter({
 });
 
 router.beforeEach((to) => {
-    const token = sessionStorage.getItem('authToken');
-    const rawUser = sessionStorage.getItem('currentUser');
-    let currentUser = null;
-
-    try {
-        currentUser = rawUser ? JSON.parse(rawUser) : null;
-    } catch (err) {
-        currentUser = null;
-    }
-
-    if (to.meta.requiresAuth && !token) {
+    if (to.meta.requiresAuth && !store.getters.isAuthenticated) {
         return '/auth/login';
     }
 
-    if (to.meta.requiresAdmin && currentUser && currentUser.role !== 'admin') {
+    if (to.meta.requiresAdmin && store.state.user && !store.getters.isAdmin) {
         return '/profile';
     }
 
-    if ((to.path === '/auth/login' || to.path === '/auth/register') && token) {
+    if ((to.path === '/auth/login' || to.path === '/auth/register') && store.getters.isAuthenticated) {
         return '/profile';
     }
 });

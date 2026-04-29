@@ -92,10 +92,6 @@ export default {
     },
 
     methods: {
-        clearAuthCookie() {
-            document.cookie = 'authToken=; Path=/; Max-Age=0; SameSite=Lax';
-        },
-
         getCategoryLabel(category) {
             const labels = {
                 Rings: 'Кольца',
@@ -137,16 +133,14 @@ export default {
         },
 
         getAuthHeaders() {
-            const token = sessionStorage.getItem('authToken');
+            const headers = this.$store.getters.authHeaders;
 
-            if (!token) {
+            if (!headers) {
                 this.$router.replace('/auth/login');
                 return null;
             }
 
-            return {
-                Authorization: `Bearer ${token}`
-            };
+            return headers;
         },
 
         async loadFavorites() {
@@ -178,9 +172,7 @@ export default {
                 this.items = Array.isArray(result?.items) ? result.items : [];
             } catch (err) {
                 if (err.message === 'Unauthorized') {
-                    this.clearAuthCookie();
-                    sessionStorage.removeItem('authToken');
-                    sessionStorage.removeItem('currentUser');
+                    this.$store.dispatch('clearAuth');
                     this.$router.replace('/auth/login');
                     return;
                 }
@@ -221,9 +213,7 @@ export default {
                 this.items = this.items.filter((item) => item.id !== itemId);
             } catch (err) {
                 if (err.message === 'Unauthorized') {
-                    this.clearAuthCookie();
-                    sessionStorage.removeItem('authToken');
-                    sessionStorage.removeItem('currentUser');
+                    this.$store.dispatch('clearAuth');
                     this.$router.replace('/auth/login');
                     return;
                 }

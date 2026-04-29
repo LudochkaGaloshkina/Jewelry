@@ -187,10 +187,6 @@ export default {
             return item?.isDiscounted ? item.finalPrice : item?.price;
         },
 
-        clearAuthCookie() {
-            document.cookie = 'authToken=; Path=/; Max-Age=0; SameSite=Lax';
-        },
-
         getApiErrorMessage(result, fallbackMessage) {
             const serverMessage = typeof result?.message === 'string' ? result.message.trim() : '';
 
@@ -202,15 +198,7 @@ export default {
         },
 
         getAuthHeaders() {
-            const token = sessionStorage.getItem('authToken');
-
-            if (!token) {
-                return null;
-            }
-
-            return {
-                Authorization: `Bearer ${token}`
-            };
+            return this.$store.getters.authHeaders;
         },
 
         async loadPageData() {
@@ -286,9 +274,7 @@ export default {
                     && result.items.some((favoriteItem) => favoriteItem.id === this.item.id);
             } catch (err) {
                 if (err.message === 'Unauthorized') {
-                    this.clearAuthCookie();
-                    sessionStorage.removeItem('authToken');
-                    sessionStorage.removeItem('currentUser');
+                    this.$store.dispatch('clearAuth');
                 }
 
                 this.isFavorite = false;
@@ -331,9 +317,7 @@ export default {
                 this.favoriteMessage = 'Товар добавлен в избранное.';
             } catch (err) {
                 if (err.message === 'Unauthorized') {
-                    this.clearAuthCookie();
-                    sessionStorage.removeItem('authToken');
-                    sessionStorage.removeItem('currentUser');
+                    this.$store.dispatch('clearAuth');
                     this.$router.push('/auth/login');
                     return;
                 }
