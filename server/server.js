@@ -6,6 +6,7 @@ import { fileURLToPath } from "url"
 import { setupAuth } from "./auth.js"
 import { setupItems } from "./items.js"
 import { setupFavorites } from "./favorites.js"
+import { setupAdmin } from "./admin.js"
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -37,6 +38,7 @@ const { authMiddleware } = setupAuth(app, db, {
 })
 setupItems(app, db, authMiddleware)
 setupFavorites(app, db, authMiddleware)
+setupAdmin(app, db, authMiddleware)
 
 
 

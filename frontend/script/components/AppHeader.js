@@ -54,6 +54,13 @@ export default {
             </button>
 
             <template v-if="currentUser">
+                <router-link
+                    v-if="currentUser.role === 'admin'"
+                    class="tool-button admin-header-link"
+                    to="/admin"
+                >
+                    Admin
+                </router-link>
                 <router-link class="account-link account-name" to="/profile">
                     {{ currentUser.name }}
                 </router-link>

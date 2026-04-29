@@ -5,6 +5,7 @@ import Catalog from './components/Catalog.js';
 import ItemDetails from './components/ItemDetails.js';
 import Favorites from './components/Favorites.js';
 import Discount from './components/Discount.js';
+import Admin from './components/Admin.js';
 
 
 const { createRouter, createWebHistory } = window.VueRouter;
@@ -28,6 +29,7 @@ const routes = [
     { path: '/auth/login', component: Auth, props: { mode: 'login' } },
     { path: '/auth/register', component: Auth, props: { mode: 'register' } },
     { path: '/profile', component: Profile, meta: { requiresAuth: true } },
+    { path: '/admin', component: Admin, meta: { requiresAuth: true, requiresAdmin: true } },
 ];
 
 export const router = createRouter({
@@ -37,9 +39,21 @@ export const router = createRouter({
 
 router.beforeEach((to) => {
     const token = sessionStorage.getItem('authToken');
+    const rawUser = sessionStorage.getItem('currentUser');
+    let currentUser = null;
+
+    try {
+        currentUser = rawUser ? JSON.parse(rawUser) : null;
+    } catch (err) {
+        currentUser = null;
+    }
 
     if (to.meta.requiresAuth && !token) {
         return '/auth/login';
+    }
+
+    if (to.meta.requiresAdmin && currentUser && currentUser.role !== 'admin') {
+        return '/profile';
     }
 
     if ((to.path === '/auth/login' || to.path === '/auth/register') && token) {
