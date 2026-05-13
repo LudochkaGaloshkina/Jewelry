@@ -61,10 +61,10 @@ export default {
                             <button
                                 type="button"
                                 class="detail-action primary"
-                                disabled
-                                title="Функция появится позже"
+                                :disabled="isCartActionLoading || !item"
+                                @click="addToCart"
                             >
-                                Добавить в корзину
+                                {{ isCartActionLoading ? 'Добавляем...' : 'Добавить в корзину' }}
                             </button>
                             <button
                                 type="button"
@@ -81,6 +81,7 @@ export default {
                             </button>
                         </div>
 
+                        <p v-if="cartMessage" class="item-note">{{ cartMessage }}</p>
                         <p v-if="favoriteMessage" class="item-note">{{ favoriteMessage }}</p>
                     </div>
                 </section>
@@ -140,6 +141,8 @@ export default {
             relatedItems: [],
             isLoading: false,
             errorMessage: '',
+            isCartActionLoading: false,
+            cartMessage: '',
             isFavorite: false,
             isFavoriteActionLoading: false,
             favoriteMessage: ''
@@ -207,6 +210,7 @@ export default {
             this.item = null;
             this.relatedItems = [];
             this.isFavorite = false;
+            this.cartMessage = '';
             this.favoriteMessage = '';
 
             try {
@@ -278,6 +282,53 @@ export default {
                 }
 
                 this.isFavorite = false;
+            }
+        },
+
+        async addToCart() {
+            if (!this.item || this.isCartActionLoading) {
+                return;
+            }
+
+            const headers = this.$store.getters.jsonAuthHeaders;
+
+            if (!headers) {
+                this.$router.push('/auth/login');
+                return;
+            }
+
+            this.isCartActionLoading = true;
+            this.cartMessage = '';
+
+            try {
+                const response = await fetch(`/api/users/me/cart/${this.item.id}`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers,
+                    body: JSON.stringify({ quantity: 1 })
+                });
+                const result = await response.json().catch(() => null);
+
+                if (response.status === 401) {
+                    throw new Error('Unauthorized');
+                }
+
+                if (!response.ok || result?.status !== 'ok') {
+                    this.cartMessage = this.getApiErrorMessage(result, 'Не удалось добавить товар в корзину.');
+                    return;
+                }
+
+                this.cartMessage = 'Товар добавлен в корзину.';
+            } catch (err) {
+                if (err.message === 'Unauthorized') {
+                    this.$store.dispatch('clearAuth');
+                    this.$router.push('/auth/login');
+                    return;
+                }
+
+                this.cartMessage = 'Не удалось добавить товар в корзину. Проверьте подключение к API и попробуйте ещё раз.';
+            } finally {
+                this.isCartActionLoading = false;
             }
         },
 

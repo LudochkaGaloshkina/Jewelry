@@ -39,10 +39,9 @@ export default {
         </router-link>
 
         <div class="header-tools header-tools-right">
-            <button
-                v-if="mode === 'home'"
+            <router-link
                 class="tool-button cart-button"
-                type="button"
+                to="/cart"
                 aria-label="Корзина"
             >
                 <svg class="tool-icon-svg" viewBox="0 0 24 24" aria-hidden="true">
@@ -51,7 +50,7 @@ export default {
                     <circle cx="17" cy="19" r="1.6" />
                 </svg>
                 <span>Корзина</span>
-            </button>
+            </router-link>
 
             <template v-if="currentUser">
                 <router-link

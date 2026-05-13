@@ -104,10 +104,20 @@ export default {
                                     >
                                         Подробнее
                                     </router-link>
+                                    <button
+                                        class="detail-link product-add-cart"
+                                        type="button"
+                                        :disabled="addingCartItemId === item.id"
+                                        @click="addToCart(item)"
+                                    >
+                                        {{ addingCartItemId === item.id ? 'Добавляем...' : 'В корзину' }}
+                                    </button>
                                 </div>
                             </div>
                         </article>
                     </div>
+
+                    <p v-if="cartMessage" class="item-note">{{ cartMessage }}</p>
 
                     <nav v-if="!isLoading && !errorMessage && totalPages > 1" class="catalog-pagination" aria-label="Пагинация каталога">
                         <button
@@ -159,7 +169,9 @@ export default {
             currentPage: 1,
             itemsPerPage: 6,
             totalPages: 0,
-            totalItems: 0
+            totalItems: 0,
+            addingCartItemId: null,
+            cartMessage: ''
         };
     },
 
@@ -302,6 +314,53 @@ export default {
                 this.errorMessage = 'Не удалось загрузить каталог. Проверьте подключение к API и попробуйте ещё раз.';
             } finally {
                 this.isLoading = false;
+            }
+        },
+
+        async addToCart(item) {
+            if (!item || this.addingCartItemId) {
+                return;
+            }
+
+            const headers = this.$store.getters.jsonAuthHeaders;
+
+            if (!headers) {
+                this.$router.push('/auth/login');
+                return;
+            }
+
+            this.addingCartItemId = item.id;
+            this.cartMessage = '';
+
+            try {
+                const response = await fetch(`/api/users/me/cart/${item.id}`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers,
+                    body: JSON.stringify({ quantity: 1 })
+                });
+                const result = await response.json().catch(() => null);
+
+                if (response.status === 401) {
+                    throw new Error('Unauthorized');
+                }
+
+                if (!response.ok || result?.status !== 'ok') {
+                    this.cartMessage = this.getApiErrorMessage(result, 'Не удалось добавить товар в корзину.');
+                    return;
+                }
+
+                this.cartMessage = `${item.title} добавлен в корзину.`;
+            } catch (err) {
+                if (err.message === 'Unauthorized') {
+                    this.$store.dispatch('clearAuth');
+                    this.$router.push('/auth/login');
+                    return;
+                }
+
+                this.cartMessage = 'Не удалось добавить товар в корзину. Проверьте подключение к API и попробуйте ещё раз.';
+            } finally {
+                this.addingCartItemId = null;
             }
         }
     }
