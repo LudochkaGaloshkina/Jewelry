@@ -1,4 +1,5 @@
 import AppHeader from './AppHeader.js';
+import { getApiErrorMessage, getNetworkErrorMessage } from '../apiErrors.js';
 
 export default {
     components: {
@@ -30,7 +31,7 @@ export default {
                     </router-link>
                 </div>
 
-                <p v-if="errorMessage" class="collection-state">{{ errorMessage }}</p>
+                <p v-if="errorMessage" class="collection-state collection-state-error">{{ errorMessage }}</p>
                 <p v-else-if="isLoading" class="collection-state">Подбираем актуальные скидки...</p>
                 <p v-else-if="items.length === 0" class="collection-state">
                     Сейчас скидочных предложений нет.
@@ -63,10 +64,20 @@ export default {
                                 >
                                     Подробнее
                                 </router-link>
+                                <button
+                                    class="detail-link product-add-cart"
+                                    type="button"
+                                    :disabled="addingCartItemId === item.id"
+                                    @click="addToCart(item)"
+                                >
+                                    {{ addingCartItemId === item.id ? 'Добавляем...' : 'В корзину' }}
+                                </button>
                             </div>
                         </div>
                     </article>
                 </div>
+
+                <p v-if="cartMessage" class="item-note">{{ cartMessage }}</p>
             </section>
         </main>
     </div>
@@ -76,7 +87,9 @@ export default {
         return {
             items: [],
             isLoading: false,
-            errorMessage: ''
+            errorMessage: '',
+            addingCartItemId: null,
+            cartMessage: ''
         };
     },
 
@@ -117,18 +130,65 @@ export default {
 
             try {
                 const response = await fetch('/api/items?discount=true');
-                const result = await response.json();
+                const result = await response.json().catch(() => null);
 
-                if (!response.ok || result.status !== 'ok') {
-                    this.errorMessage = 'Не удалось загрузить скидочные товары.';
+                if (!response.ok || result?.status !== 'ok') {
+                    this.errorMessage = getApiErrorMessage(result, 'Не удалось загрузить скидочные товары.', response);
                     return;
                 }
 
                 this.items = Array.isArray(result.items) ? result.items : [];
             } catch (err) {
-                this.errorMessage = 'Не удалось загрузить скидочные товары.';
+                this.errorMessage = getNetworkErrorMessage('Не удалось загрузить скидочные товары.');
             } finally {
                 this.isLoading = false;
+            }
+        },
+
+        async addToCart(item) {
+            if (!item || this.addingCartItemId) {
+                return;
+            }
+
+            const headers = this.$store.getters.jsonAuthHeaders;
+
+            if (!headers) {
+                this.$router.push('/auth/login');
+                return;
+            }
+
+            this.addingCartItemId = item.id;
+            this.cartMessage = '';
+
+            try {
+                const response = await fetch(`/api/users/me/cart/${item.id}`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers,
+                    body: JSON.stringify({ quantity: 1 })
+                });
+                const result = await response.json().catch(() => null);
+
+                if (response.status === 401) {
+                    throw new Error('Unauthorized');
+                }
+
+                if (!response.ok || result?.status !== 'ok') {
+                    this.cartMessage = getApiErrorMessage(result, 'Не удалось добавить товар в корзину.', response);
+                    return;
+                }
+
+                this.cartMessage = `${item.title} добавлен в корзину.`;
+            } catch (err) {
+                if (err.message === 'Unauthorized') {
+                    this.$store.dispatch('clearAuth');
+                    this.$router.push('/auth/login');
+                    return;
+                }
+
+                this.cartMessage = getNetworkErrorMessage('Не удалось добавить товар в корзину.');
+            } finally {
+                this.addingCartItemId = null;
             }
         }
     }

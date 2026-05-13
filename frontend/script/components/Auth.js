@@ -1,4 +1,5 @@
 import AppHeader from './AppHeader.js';
+import { getApiErrorMessage, getNetworkErrorMessage } from '../apiErrors.js';
 
 export default {
     props: ['mode'],
@@ -200,6 +201,22 @@ export default {
             this.recoveryEmail = this.email;
         },
 
+        getAuthErrorMessage(result, fallbackMessage, response) {
+            if (result?.message === 'wrong email' || result?.message === 'wrong password') {
+                return 'Неверный логин или пароль.';
+            }
+
+            if (result?.message === 'email exists') {
+                return 'Пользователь с таким email уже существует.';
+            }
+
+            if (result?.message === 'missing fields') {
+                return 'Заполните все поля.';
+            }
+
+            return getApiErrorMessage(result, fallbackMessage, response);
+        },
+
         getPasswordValidationError(password) {
             if (password.length < 8) {
                 return 'Пароль должен быть не короче 8 символов.';
@@ -268,10 +285,10 @@ export default {
                     body: JSON.stringify(payload)
                 });
 
-                const result = await response.json();
+                const result = await response.json().catch(() => null);
 
-                if (!response.ok || result.status !== 'ok') {
-                    this.message = result.message || 'Не удалось выполнить запрос.';
+                if (!response.ok || result?.status !== 'ok') {
+                    this.message = this.getAuthErrorMessage(result, 'Не удалось выполнить запрос.', response);
                     return;
                 }
 
@@ -281,7 +298,7 @@ export default {
                 });
                 this.$router.push('/profile');
             } catch (err) {
-                this.message = 'Ошибка соединения с сервером.';
+                this.message = getNetworkErrorMessage('Не удалось выполнить запрос.');
             } finally {
                 this.isSubmitting = false;
             }
@@ -314,10 +331,10 @@ export default {
                     })
                 });
 
-                const result = await response.json();
+                const result = await response.json().catch(() => null);
 
-                if (!response.ok || result.status !== 'ok') {
-                    this.message = result.message || 'Не удалось восстановить пароль.';
+                if (!response.ok || result?.status !== 'ok') {
+                    this.message = getApiErrorMessage(result, 'Не удалось восстановить пароль.', response);
                     return;
                 }
 
@@ -328,7 +345,7 @@ export default {
                 this.email = this.recoveryEmail;
                 this.isRecoveryVisible = false;
             } catch (err) {
-                this.message = 'Ошибка соединения с сервером.';
+                this.message = getNetworkErrorMessage('Не удалось восстановить пароль.');
             } finally {
                 this.isRecoverySubmitting = false;
             }

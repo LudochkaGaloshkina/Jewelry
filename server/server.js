@@ -43,6 +43,12 @@ setupCart(app, db, authMiddleware)
 setupAdmin(app, db, authMiddleware)
 
 
+app.use("/api", (req, res) => {
+    res.status(404).json({
+        status: "error",
+        message: "Маршрут API не найден."
+    })
+})
 
 app.use((req, res) => {
     res.sendFile(path.join(__dirname, "../frontend/index.html"))

@@ -1,4 +1,5 @@
 import AppHeader from './AppHeader.js';
+import { getApiErrorMessage, getNetworkErrorMessage } from '../apiErrors.js';
 
 export default {
     components: {
@@ -190,16 +191,6 @@ export default {
             return item?.isDiscounted ? item.finalPrice : item?.price;
         },
 
-        getApiErrorMessage(result, fallbackMessage) {
-            const serverMessage = typeof result?.message === 'string' ? result.message.trim() : '';
-
-            if (serverMessage) {
-                return `${fallbackMessage} ${serverMessage}.`;
-            }
-
-            return fallbackMessage;
-        },
-
         getAuthHeaders() {
             return this.$store.getters.authHeaders;
         },
@@ -219,7 +210,7 @@ export default {
                 const itemResult = await itemResponse.json().catch(() => null);
 
                 if (!itemResponse.ok || itemResult?.status !== 'ok' || !itemResult?.item) {
-                    this.errorMessage = this.getApiErrorMessage(itemResult, 'Не удалось загрузить товар.');
+                    this.errorMessage = getApiErrorMessage(itemResult, 'Не удалось загрузить товар.', itemResponse);
                     return;
                 }
 
@@ -227,7 +218,7 @@ export default {
                 await this.loadFavoriteState();
                 await this.loadRelatedItems(itemId);
             } catch (err) {
-                this.errorMessage = 'Не удалось загрузить товар. Проверьте подключение к API и попробуйте ещё раз.';
+                this.errorMessage = getNetworkErrorMessage('Не удалось загрузить товар.');
             } finally {
                 this.isLoading = false;
             }
@@ -314,7 +305,7 @@ export default {
                 }
 
                 if (!response.ok || result?.status !== 'ok') {
-                    this.cartMessage = this.getApiErrorMessage(result, 'Не удалось добавить товар в корзину.');
+                    this.cartMessage = getApiErrorMessage(result, 'Не удалось добавить товар в корзину.', response);
                     return;
                 }
 
@@ -326,7 +317,7 @@ export default {
                     return;
                 }
 
-                this.cartMessage = 'Не удалось добавить товар в корзину. Проверьте подключение к API и попробуйте ещё раз.';
+                this.cartMessage = getNetworkErrorMessage('Не удалось добавить товар в корзину.');
             } finally {
                 this.isCartActionLoading = false;
             }
@@ -360,7 +351,7 @@ export default {
                 }
 
                 if (!response.ok || result?.status !== 'ok') {
-                    this.favoriteMessage = this.getApiErrorMessage(result, 'Не удалось добавить товар в избранное.');
+                    this.favoriteMessage = getApiErrorMessage(result, 'Не удалось добавить товар в избранное.', response);
                     return;
                 }
 
@@ -373,7 +364,7 @@ export default {
                     return;
                 }
 
-                this.favoriteMessage = 'Не удалось добавить товар в избранное. Проверьте подключение к API и попробуйте ещё раз.';
+                this.favoriteMessage = getNetworkErrorMessage('Не удалось добавить товар в избранное.');
             } finally {
                 this.isFavoriteActionLoading = false;
             }

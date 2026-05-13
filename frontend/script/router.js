@@ -7,6 +7,7 @@ import Favorites from './components/Favorites.js';
 import Cart from './components/Cart.js';
 import Discount from './components/Discount.js';
 import Admin from './components/Admin.js';
+import NotFound from './components/NotFound.js';
 import { store } from './store.js';
 
 
@@ -33,6 +34,7 @@ const routes = [
     { path: '/auth/register', component: Auth, props: { mode: 'register' } },
     { path: '/profile', component: Profile, meta: { requiresAuth: true } },
     { path: '/admin', component: Admin, meta: { requiresAuth: true, requiresAdmin: true } },
+    { path: '/:pathMatch(.*)*', component: NotFound },
 ];
 
 export const router = createRouter({

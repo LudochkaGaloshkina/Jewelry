@@ -1,4 +1,5 @@
 import AppHeader from './AppHeader.js';
+import { getApiErrorMessage, getNetworkErrorMessage } from '../apiErrors.js';
 
 export default {
     components: {
@@ -341,13 +342,13 @@ export default {
                 const result = await response.json().catch(() => null);
 
                 if (!response.ok || result?.status !== 'ok') {
-                    this.itemsMessage = result?.message || 'Не удалось загрузить товары.';
+                    this.itemsMessage = getApiErrorMessage(result, 'Не удалось загрузить товары.', response);
                     return;
                 }
 
                 this.items = Array.isArray(result.items) ? result.items : [];
             } catch (err) {
-                this.itemsMessage = 'Ошибка соединения с сервером.';
+                this.itemsMessage = getNetworkErrorMessage('Не удалось загрузить товары.');
             } finally {
                 this.isItemsLoading = false;
             }
@@ -365,13 +366,13 @@ export default {
                 const result = await response.json().catch(() => null);
 
                 if (!response.ok || result?.status !== 'ok') {
-                    this.usersMessage = result?.message || 'Не удалось загрузить пользователей.';
+                    this.usersMessage = getApiErrorMessage(result, 'Не удалось загрузить пользователей.', response);
                     return;
                 }
 
                 this.users = Array.isArray(result.users) ? result.users : [];
             } catch (err) {
-                this.usersMessage = 'Ошибка соединения с сервером.';
+                this.usersMessage = getNetworkErrorMessage('Не удалось загрузить пользователей.');
             } finally {
                 this.isUsersLoading = false;
             }
@@ -453,7 +454,7 @@ export default {
                 const result = await response.json().catch(() => null);
 
                 if (!response.ok || result?.status !== 'ok') {
-                    this.itemsMessage = result?.message || 'Не удалось сохранить товар.';
+                    this.itemsMessage = getApiErrorMessage(result, 'Не удалось сохранить товар.', response);
                     return;
                 }
 
@@ -461,7 +462,7 @@ export default {
                 this.cancelItemForm();
                 await this.loadItems();
             } catch (err) {
-                this.itemsMessage = 'Ошибка соединения с сервером.';
+                this.itemsMessage = getNetworkErrorMessage('Не удалось сохранить товар.');
             } finally {
                 this.isSavingItem = false;
             }
@@ -483,14 +484,14 @@ export default {
                 const result = await response.json().catch(() => null);
 
                 if (!response.ok || result?.status !== 'ok') {
-                    this.itemsMessage = result?.message || 'Не удалось удалить товар.';
+                    this.itemsMessage = getApiErrorMessage(result, 'Не удалось удалить товар.', response);
                     return;
                 }
 
                 this.itemsMessage = 'Товар удален.';
                 await this.loadItems();
             } catch (err) {
-                this.itemsMessage = 'Ошибка соединения с сервером.';
+                this.itemsMessage = getNetworkErrorMessage('Не удалось удалить товар.');
             }
         },
 
@@ -507,7 +508,7 @@ export default {
                 const result = await response.json().catch(() => null);
 
                 if (!response.ok || result?.status !== 'ok') {
-                    this.usersMessage = result?.message || 'Не удалось обновить роль.';
+                    this.usersMessage = getApiErrorMessage(result, 'Не удалось обновить роль.', response);
                     await this.loadUsers();
                     return;
                 }
@@ -515,7 +516,7 @@ export default {
                 this.usersMessage = 'Роль пользователя обновлена.';
                 await this.loadUsers();
             } catch (err) {
-                this.usersMessage = 'Ошибка соединения с сервером.';
+                this.usersMessage = getNetworkErrorMessage('Не удалось обновить роль.');
                 await this.loadUsers();
             }
         },
@@ -536,14 +537,14 @@ export default {
                 const result = await response.json().catch(() => null);
 
                 if (!response.ok || result?.status !== 'ok') {
-                    this.usersMessage = result?.message || 'Не удалось удалить пользователя.';
+                    this.usersMessage = getApiErrorMessage(result, 'Не удалось удалить пользователя.', response);
                     return;
                 }
 
                 this.usersMessage = 'Пользователь удален.';
                 await this.loadUsers();
             } catch (err) {
-                this.usersMessage = 'Ошибка соединения с сервером.';
+                this.usersMessage = getNetworkErrorMessage('Не удалось удалить пользователя.');
             }
         }
     }

@@ -1,4 +1,5 @@
 import AppHeader from './AppHeader.js';
+import { getApiErrorMessage, getNetworkErrorMessage } from '../apiErrors.js';
 
 export default {
     components: {
@@ -141,10 +142,10 @@ export default {
                     })
                 });
 
-                const result = await response.json();
+                const result = await response.json().catch(() => null);
 
-                if (!response.ok || result.status !== 'ok') {
-                    this.message = result.message || 'Не удалось сохранить секретное слово.';
+                if (!response.ok || result?.status !== 'ok') {
+                    this.message = getApiErrorMessage(result, 'Не удалось сохранить секретное слово.', response);
                     return;
                 }
 
@@ -153,7 +154,7 @@ export default {
                 this.message = result.message;
                 this.$store.commit('setUser', result.user);
             } catch (err) {
-                this.message = 'Ошибка соединения с сервером.';
+                this.message = getNetworkErrorMessage('Не удалось сохранить секретное слово.');
             } finally {
                 this.isSavingSecretWord = false;
             }

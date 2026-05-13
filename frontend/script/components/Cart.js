@@ -1,4 +1,5 @@
 import AppHeader from './AppHeader.js';
+import { getApiErrorMessage, getNetworkErrorMessage } from '../apiErrors.js';
 
 export default {
     components: {
@@ -188,16 +189,6 @@ export default {
             }).format(amount);
         },
 
-        getApiErrorMessage(result, fallbackMessage) {
-            const serverMessage = typeof result?.message === 'string' ? result.message.trim() : '';
-
-            if (serverMessage) {
-                return `${fallbackMessage} ${serverMessage}.`;
-            }
-
-            return fallbackMessage;
-        },
-
         getAuthHeaders() {
             const headers = this.$store.getters.jsonAuthHeaders;
 
@@ -239,7 +230,7 @@ export default {
                 }
 
                 if (!response.ok || result?.status !== 'ok') {
-                    this.errorMessage = this.getApiErrorMessage(result, 'Не удалось загрузить корзину.');
+                    this.errorMessage = getApiErrorMessage(result, 'Не удалось загрузить корзину.', response);
                     return;
                 }
 
@@ -251,7 +242,7 @@ export default {
                     return;
                 }
 
-                this.errorMessage = 'Не удалось загрузить корзину. Проверьте подключение к API и попробуйте ещё раз.';
+                this.errorMessage = getNetworkErrorMessage('Не удалось загрузить корзину.');
             } finally {
                 this.isLoading = false;
             }
@@ -293,7 +284,7 @@ export default {
                 }
 
                 if (!response.ok || result?.status !== 'ok') {
-                    this.errorMessage = this.getApiErrorMessage(result, 'Не удалось изменить количество.');
+                    this.errorMessage = getApiErrorMessage(result, 'Не удалось изменить количество.', response);
                     return;
                 }
 
@@ -305,7 +296,7 @@ export default {
                     return;
                 }
 
-                this.errorMessage = 'Не удалось изменить количество. Проверьте подключение к API и попробуйте ещё раз.';
+                this.errorMessage = getNetworkErrorMessage('Не удалось изменить количество.');
             } finally {
                 this.updatingCartId = null;
             }
@@ -334,7 +325,7 @@ export default {
                 }
 
                 if (!response.ok || result?.status !== 'ok') {
-                    this.errorMessage = this.getApiErrorMessage(result, 'Не удалось удалить товар из корзины.');
+                    this.errorMessage = getApiErrorMessage(result, 'Не удалось удалить товар из корзины.', response);
                     return;
                 }
 
@@ -346,7 +337,7 @@ export default {
                     return;
                 }
 
-                this.errorMessage = 'Не удалось удалить товар из корзины. Проверьте подключение к API и попробуйте ещё раз.';
+                this.errorMessage = getNetworkErrorMessage('Не удалось удалить товар из корзины.');
             } finally {
                 this.removingCartId = null;
             }
@@ -375,7 +366,7 @@ export default {
                 }
 
                 if (!response.ok || result?.status !== 'ok') {
-                    this.errorMessage = this.getApiErrorMessage(result, 'Не удалось очистить корзину.');
+                    this.errorMessage = getApiErrorMessage(result, 'Не удалось очистить корзину.', response);
                     return;
                 }
 
@@ -387,7 +378,7 @@ export default {
                     return;
                 }
 
-                this.errorMessage = 'Не удалось очистить корзину. Проверьте подключение к API и попробуйте ещё раз.';
+                this.errorMessage = getNetworkErrorMessage('Не удалось очистить корзину.');
             } finally {
                 this.isClearing = false;
             }

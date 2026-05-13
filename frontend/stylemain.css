@@ -578,6 +578,9 @@ a {
 }
 
 .product-add-cart {
+    width: 100%;
+    flex-basis: 100%;
+    box-sizing: border-box;
     font: inherit;
     font-size: 0.9rem;
     cursor: pointer;
@@ -995,6 +998,21 @@ a {
     background: rgba(255, 255, 255, 0.06);
     color: var(--text-main);
     font-size: 0.95rem;
+}
+
+.not-found-content {
+    max-width: 860px;
+}
+
+.not-found-panel {
+    display: grid;
+    gap: 18px;
+    padding: 34px;
+    border: 1px solid var(--panel-border);
+    border-radius: 34px;
+    background: linear-gradient(180deg, rgba(9, 9, 11, 0.58), rgba(9, 9, 11, 0.42));
+    backdrop-filter: blur(12px);
+    box-shadow: var(--shadow);
 }
 
 .favorites-hero {

@@ -1,4 +1,5 @@
 import AppHeader from './AppHeader.js';
+import { getApiErrorMessage, getNetworkErrorMessage } from '../apiErrors.js';
 
 export default {
     components: {
@@ -256,16 +257,6 @@ export default {
             this.loadItems();
         },
 
-        getApiErrorMessage(result, fallbackMessage) {
-            const serverMessage = typeof result?.message === 'string' ? result.message.trim() : '';
-
-            if (serverMessage) {
-                return `${fallbackMessage} ${serverMessage}.`;
-            }
-
-            return fallbackMessage;
-        },
-
         async loadItems() {
             this.isLoading = true;
             this.errorMessage = '';
@@ -299,7 +290,7 @@ export default {
                     this.items = [];
                     this.totalItems = 0;
                     this.totalPages = 0;
-                    this.errorMessage = this.getApiErrorMessage(result, 'Не удалось загрузить каталог.');
+                    this.errorMessage = getApiErrorMessage(result, 'Не удалось загрузить каталог.', response);
                     return;
                 }
 
@@ -311,7 +302,7 @@ export default {
                 this.items = [];
                 this.totalItems = 0;
                 this.totalPages = 0;
-                this.errorMessage = 'Не удалось загрузить каталог. Проверьте подключение к API и попробуйте ещё раз.';
+                this.errorMessage = getNetworkErrorMessage('Не удалось загрузить каталог.');
             } finally {
                 this.isLoading = false;
             }
@@ -346,7 +337,7 @@ export default {
                 }
 
                 if (!response.ok || result?.status !== 'ok') {
-                    this.cartMessage = this.getApiErrorMessage(result, 'Не удалось добавить товар в корзину.');
+                    this.cartMessage = getApiErrorMessage(result, 'Не удалось добавить товар в корзину.', response);
                     return;
                 }
 
@@ -358,7 +349,7 @@ export default {
                     return;
                 }
 
-                this.cartMessage = 'Не удалось добавить товар в корзину. Проверьте подключение к API и попробуйте ещё раз.';
+                this.cartMessage = getNetworkErrorMessage('Не удалось добавить товар в корзину.');
             } finally {
                 this.addingCartItemId = null;
             }
