@@ -165,7 +165,7 @@ export function setupAuth(app, db, config = {}) {
             const {name,email,password,confirmPassword,secretWord} = req.body
 
             if(!name || !email || !password){
-                return res.json({status:"error",message:"missing fields"})
+                return res.json({status:"error",message:"пропущено поле"})
             }
 
             if (!confirmPassword) {
@@ -237,14 +237,14 @@ export function setupAuth(app, db, config = {}) {
             )
 
             if(rows.length===0){
-                return res.json({status:"error",message:"wrong email"})
+                return res.json({status:"error",message:"неверный email"})
             }
 
             const user = rows[0]
             const match = await bcrypt.compare(password,user.password)
 
             if(!match){
-                return res.json({status:"error",message:"wrong password"})
+                return res.json({status:"error",message:"неверный пароль"});
             }
 
             const token = createAuthToken(user.id)
@@ -301,7 +301,7 @@ export function setupAuth(app, db, config = {}) {
             const { email, secretWord, newPassword } = req.body
 
             if (!email || !secretWord || !newPassword) {
-                return res.status(400).json({ status: "error", message: "missing fields" })
+                return res.status(400).json({ status: "error", message: "пропущено поле" })
             }
 
             if (!validatePassword(newPassword)) {
