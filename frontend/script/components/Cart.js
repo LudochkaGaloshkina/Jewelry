@@ -1,9 +1,11 @@
 import AppHeader from './AppHeader.js';
+import AppFooter from './AppFooter.js';
 import { getApiErrorMessage, getNetworkErrorMessage } from '../apiErrors.js';
 
 export default {
     components: {
-        AppHeader
+        AppHeader,
+        AppFooter
     },
 
     template: `
@@ -121,6 +123,7 @@ export default {
                 </div>
             </section>
         </main>
+        <app-footer></app-footer>
     </div>
     `,
 

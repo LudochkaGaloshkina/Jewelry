@@ -263,6 +263,110 @@ a {
     margin: 28px auto 0;
 }
 
+.site-footer {
+    display: grid;
+    grid-template-columns: minmax(260px, 1.35fr) repeat(3, minmax(160px, 1fr));
+    gap: 28px;
+    max-width: 1240px;
+    margin: 34px auto 0;
+    padding: 28px;
+    border: 1px solid var(--panel-border);
+    border-radius: 30px;
+    background: linear-gradient(180deg, rgba(9, 9, 11, 0.62), rgba(9, 9, 11, 0.46));
+    backdrop-filter: blur(12px);
+    box-shadow: var(--shadow);
+}
+
+.footer-brand,
+.footer-section {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.footer-logo-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.footer-logo {
+    width: 58px;
+    height: 58px;
+    object-fit: contain;
+    filter: drop-shadow(0 6px 16px rgba(0, 0, 0, 0.28));
+}
+
+.footer-brand-name {
+    color: var(--gold-strong);
+    font-family: "Cormorant Garamond", serif;
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.footer-description {
+    max-width: 360px;
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.96rem;
+    line-height: 1.7;
+}
+
+.footer-title {
+    margin: 0 0 2px;
+    color: var(--gold);
+    font-size: 0.82rem;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+}
+
+.footer-section a,
+.footer-section span {
+    color: var(--text-muted);
+    font-size: 0.96rem;
+    font-style: normal;
+    line-height: 1.5;
+}
+
+.footer-section a {
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.footer-section a:hover {
+    color: var(--gold-strong);
+    transform: translateX(2px);
+}
+
+.footer-socials {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.footer-socials a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border: 1px solid rgba(239, 207, 147, 0.24);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--gold-strong);
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+}
+
+.footer-socials a:hover {
+    background: rgba(215, 182, 122, 0.12);
+    border-color: rgba(239, 207, 147, 0.48);
+    transform: translateY(-1px);
+}
+
 .hero-copy {
     max-width: 760px;
 }
@@ -1615,6 +1719,14 @@ a {
         grid-template-columns: 1fr;
     }
 
+    .site-footer {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .footer-brand {
+        grid-column: 1 / -1;
+    }
+
     .admin-layout {
         grid-template-columns: 1fr;
     }
@@ -1665,6 +1777,7 @@ a {
     }
 
     .site-header,
+    .site-footer,
     .slider-card,
     .collection-section,
     .catalog-filters,
@@ -1674,6 +1787,15 @@ a {
     .admin-panel {
         padding: 16px;
         border-radius: 24px;
+    }
+
+    .site-footer {
+        grid-template-columns: 1fr;
+        gap: 22px;
+    }
+
+    .footer-description {
+        max-width: none;
     }
 
     .admin-panel-head,
@@ -1798,6 +1920,11 @@ a {
         border-radius: 22px;
     }
 
+    .site-footer {
+        padding: 14px;
+        border-radius: 20px;
+    }
+
     .header-tools {
         gap: 10px;
     }
@@ -1811,6 +1938,15 @@ a {
 
     .home-brand-name {
         font-size: 1.7rem;
+    }
+
+    .footer-brand-name {
+        font-size: 1.65rem;
+    }
+
+    .footer-logo {
+        width: 48px;
+        height: 48px;
     }
 
     .home-brand-tagline {

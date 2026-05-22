@@ -1,8 +1,10 @@
 import AppHeader from './AppHeader.js';
+import AppFooter from './AppFooter.js';
 
 export default {
     components: {
-        AppHeader
+        AppHeader,
+        AppFooter
     },
 
     template: `
@@ -26,6 +28,7 @@ export default {
                 </div>
             </section>
         </main>
+        <app-footer></app-footer>
     </div>
     `
 };

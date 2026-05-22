@@ -1,9 +1,11 @@
 import AppHeader from './AppHeader.js';
+import AppFooter from './AppFooter.js';
 import { getApiErrorMessage, getNetworkErrorMessage } from '../apiErrors.js';
 
 export default {
     components: {
-        AppHeader
+        AppHeader,
+        AppFooter
     },
 
     template: `
@@ -90,6 +92,7 @@ export default {
                 <p v-if="cartMessage" class="item-note">{{ cartMessage }}</p>
             </section>
         </main>
+        <app-footer></app-footer>
     </div>
     `,
 
