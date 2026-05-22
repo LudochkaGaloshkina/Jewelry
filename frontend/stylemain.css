@@ -1663,7 +1663,7 @@ a {
     right: 18px;
 }
 
-@media (max-width: 920px) {
+@media (max-width: 1000px) {
     .site-header {
         grid-template-columns: minmax(0, 1fr) auto;
         justify-items: stretch;
