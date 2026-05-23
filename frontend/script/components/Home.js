@@ -26,7 +26,7 @@ export default {
                 <div class="slider-meta">
                     <span class="slider-badge">Featured Selection</span>
                     <span class="slider-count">
-                        {{ String(currentIndex + 1).padStart(2, '0') }} / {{ String(images.length).padStart(2, '0') }}
+                        {{ String(images.length ? currentIndex + 1 : 0).padStart(2, '0') }} / {{ String(images.length).padStart(2, '0') }}
                     </span>
                 </div>
 
@@ -97,8 +97,7 @@ export default {
     `,
 
     mounted() {
-        this.setupSlider();
-        this.startAutoSlide();
+        this.loadSliderImages();
         this.loadPopularItems();
         window.addEventListener('resize', this.handleResize);
     },
@@ -110,14 +109,10 @@ export default {
 
     data() {
         return {
-            images: [
-                '/script/Денис.jpg',
-                '/script/Пашка.jpg',
-                '/script/Вероника.jpg',
-                '/script/Дима.jpg'
-            ],
+            images: [],
             currentIndex: 0,
             autoSlideId: null,
+            isSliderLoading: false,
             popularItems: [],
             isItemsLoading: false,
             itemsError: '',
@@ -137,6 +132,33 @@ export default {
             };
 
             return labels[category] || category;
+        },
+
+        async loadSliderImages() {
+            this.isSliderLoading = true;
+
+            try {
+                const response = await fetch('/api/images?type=slider');
+                const result = await response.json().catch(() => null);
+
+                if (!response.ok || result?.status !== 'ok') {
+                    this.images = [];
+                    this.setupSlider();
+                    return;
+                }
+
+                this.images = Array.isArray(result.images)
+                    ? result.images.map(image => image.imageUrl).filter(Boolean)
+                    : [];
+                this.currentIndex = 0;
+                this.setupSlider();
+                this.startAutoSlide();
+            } catch (err) {
+                this.images = [];
+                this.setupSlider();
+            } finally {
+                this.isSliderLoading = false;
+            }
         },
 
         async loadPopularItems() {
@@ -230,6 +252,10 @@ export default {
         setupSlider() {
             const slider = this.$refs.slider;
 
+            if (!slider) {
+                return;
+            }
+
             slider.innerHTML = '';
 
             this.images.forEach(src => {
@@ -244,6 +270,11 @@ export default {
 
         startAutoSlide() {
             this.stopAutoSlide();
+
+            if (this.images.length < 2) {
+                return;
+            }
+
             this.autoSlideId = setInterval(() => {
                 this.next();
             }, 4000);
@@ -257,11 +288,19 @@ export default {
         },
 
         next() {
+            if (!this.images.length) {
+                return;
+            }
+
             this.currentIndex = (this.currentIndex + 1) % this.images.length;
             this.update();
         },
 
         prev() {
+            if (!this.images.length) {
+                return;
+            }
+
             this.currentIndex =
                 (this.currentIndex - 1 + this.images.length) % this.images.length;
             this.update();

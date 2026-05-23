@@ -23,7 +23,7 @@ body {
     font-family: "Manrope", sans-serif;
     background:
         linear-gradient(135deg, rgba(0, 0, 0, 0.55), rgba(19, 14, 8, 0.62)),
-        url('фон.avif') center/cover fixed;
+        url('/api/images/key/main_background/file') center/cover fixed;
 }
 
 a {

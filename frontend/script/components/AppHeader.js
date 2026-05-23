@@ -9,7 +9,7 @@ export default {
     template: `
     <header class="site-header" :class="{ 'is-menu-open': isMenuOpen }">
         <router-link class="home-brand" to="/" @click="closeMenu">
-            <img class="home-logo" src="/logo.png" alt="Diamond Blackstar logo">
+            <img class="home-logo" src="/api/images/key/site_logo/file" alt="Diamond Blackstar logo">
             <div class="home-brand-copy">
                 <span class="home-brand-name">Diamond Blackstar</span>
                 <span class="home-brand-tagline">Jewelry crafted with character</span>
@@ -41,7 +41,7 @@ export default {
                 >
                     <img
                         class="tool-icon-image"
-                        src="/wedding-gift_17153035.png"
+                        src="/api/images/key/gift_icon/file"
                         alt=""
                     >
                     <span>Каталог</span>

@@ -3,7 +3,7 @@ export default {
     <footer class="site-footer">
         <div class="footer-brand">
             <router-link class="footer-logo-link" to="/">
-                <img class="footer-logo" src="/logo.png" alt="Diamond Blackstar logo">
+                <img class="footer-logo" src="/api/images/key/site_logo/file" alt="Diamond Blackstar logo">
                 <span class="footer-brand-name">Diamond Blackstar</span>
             </router-link>
             <p class="footer-description">

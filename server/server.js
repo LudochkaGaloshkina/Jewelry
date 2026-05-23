@@ -8,6 +8,7 @@ import { setupItems } from "./items.js"
 import { setupFavorites } from "./favorites.js"
 import { setupCart } from "./cart.js"
 import { setupAdmin } from "./admin.js"
+import { setupImages } from "./images.js"
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -41,6 +42,7 @@ setupItems(app, db, authMiddleware)
 setupFavorites(app, db, authMiddleware)
 setupCart(app, db, authMiddleware)
 setupAdmin(app, db, authMiddleware)
+setupImages(app, db)
 
 
 app.use("/api", (req, res) => {
